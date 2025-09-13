@@ -1,17 +1,142 @@
-# ルリ AITuber管理Web UI
+# ルリ AITuber管理Web UI - 軽量化版
 import streamlit as st
 import sys
 import os
+import json
 from datetime import datetime
+
+# 必要最小限のインポート（高速化）
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from character_ai import RuriCharacter, generate_image_prompt_for_ruri
-from image_analyzer import RuriImageAnalyzer
+# 遅延読み込み用フラグ
+AI_SYSTEM_LOADED = False
+PLOTLY_LOADED = False
+
+def load_ai_system():
+    """AI関連モジュールの遅延読み込み"""
+    global AI_SYSTEM_LOADED
+    if not AI_SYSTEM_LOADED:
+        try:
+            global registry, config_manager, get_configured_provider
+            global EmotionType, ColorStage, RuriCharacter
+            
+            from ai_providers import registry, config_manager, get_configured_provider
+            from ai_providers.base_provider import EmotionType, ColorStage
+            from character_ai import RuriCharacter
+            AI_SYSTEM_LOADED = True
+            return True
+        except ImportError as e:
+            st.error(f"⚠️  AIシステム読み込みエラー: {e}")
+            return False
+    return True
+
+def load_plotly():
+    """Plotly関連の遅延読み込み"""
+    global PLOTLY_LOADED
+    if not PLOTLY_LOADED:
+        try:
+            import plotly.graph_objects
+            PLOTLY_LOADED = True
+            return plotly.graph_objects
+        except ImportError:
+            return None
+    import plotly.graph_objects
+    return plotly.graph_objects
+
+# 従来のモジュール（オプション）
+IMAGE_ANALYZER_AVAILABLE = False
+STREAMING_AVAILABLE = False
+
+def load_optional_modules():
+    """オプショナルモジュールの遅延読み込み"""
+    global IMAGE_ANALYZER_AVAILABLE, STREAMING_AVAILABLE
+    
+    try:
+        global RuriImageAnalyzer
+        from image_analyzer import RuriImageAnalyzer
+        IMAGE_ANALYZER_AVAILABLE = True
+    except ImportError:
+        pass
+
 try:
+    global StreamingIntegration
     from streaming_integration import StreamingIntegration
     STREAMING_AVAILABLE = True
 except ImportError:
     STREAMING_AVAILABLE = False
+
+def initialize_ruri_character():
+    """ルリキャラクターの軽量初期化"""
+    # AIシステムの遅延読み込み
+    if not load_ai_system():
+        st.error("❌ AIシステムが利用できません")
+        return None
+    
+    # セッション状態でのキャラクター管理
+    if 'ruri' not in st.session_state:
+        with st.spinner("🌠 ルリを初期化中..."):
+            try:
+                # 確実にSimpleプロバイダーを使用
+                st.session_state.ruri = RuriCharacter(
+                    ai_provider='simple',
+                    provider_config={}
+                )
+                st.session_state.ruri_type = f"プラガブル({st.session_state.ruri.provider_name})"
+                
+            except Exception as e:
+                st.error(f"❌ キャラクター初期化エラー: {e}")
+                # フォールバック対応
+                class MinimalRuri:
+                    def __init__(self):
+                        self.provider_name = "simple"
+                        self.emotions_learned = []
+                        self.color_stage = "monochrome"
+                
+                st.session_state.ruri = MinimalRuri()
+                return st.session_state.ruri
+    
+    return st.session_state.ruri
+
+def show_ai_provider_settings():
+    """軽量なAIプロバイダー設定"""
+    
+    if load_ai_system():
+        # 利用可能なプロバイダー一覧（シンプル表示）
+        try:
+            available_providers = registry.get_available_providers()
+            
+            # ルリちゃんの初期化を確実に実行
+            if 'ruri' not in st.session_state:
+                st.session_state.ruri = initialize_ruri_character()
+            
+            # 現在のプロバイダー表示
+            if st.session_state.ruri and hasattr(st.session_state.ruri, 'provider_name'):
+                current_provider = st.session_state.ruri.provider_name
+                st.success(f"🤖 AI: {current_provider}")
+            else:
+                # フォールバック: Simple プロバイダーを使用
+                st.session_state.ruri = initialize_ruri_character()
+                if st.session_state.ruri:
+                    st.success(f"🤖 AI: {st.session_state.ruri.provider_name}")
+                else:
+                    st.warning(f"🤖 AI: 初期化中...")
+            
+            # 利用可能プロバイダー数
+            st.caption(f"利用可能: {len(available_providers)}個")
+            
+            # シンプルな設定リロードボタンのみ
+            if st.button("🔄", help="AI設定を再読み込み"):
+                if 'ruri' in st.session_state:
+                    del st.session_state.ruri
+                st.rerun()
+        except Exception as e:
+            st.error(f"設定エラー: {e}")
+    else:
+        st.error("AI未対応")
 
 def main():
     st.set_page_config(
@@ -21,79 +146,20 @@ def main():
         initial_sidebar_state="expanded"
     )
     
-    # カスタムCSSでより美しいデザインに
+    # 軽量CSS（必要最小限）
     st.markdown("""
     <style>
     .main-header {
-        background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+        background: linear-gradient(90deg, #4ecdc4, #45b7d1);
         padding: 1rem;
         border-radius: 10px;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
     }
-    .ruri-status {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 1rem;
-        border-radius: 10px;
-        color: white;
-        text-align: center;
-    }
-    .emotion-stage-display {
-        font-size: 1.2em;
-        font-weight: bold;
-        margin: 0.5rem 0;
-    }
-    
-    /* 送信ボタンのスタイル - 優しい青緑系 */
     .stButton > button[type="primary"] {
-        background: linear-gradient(45deg, #87ceeb, #20b2aa) !important;
+        background: linear-gradient(45deg, #20b2aa, #87ceeb) !important;
         color: white !important;
         border: none !important;
-        border-radius: 20px !important;
-        padding: 0.4rem 1.2rem !important;
-        font-weight: 500 !important;
-        box-shadow: 0 2px 6px rgba(32, 178, 170, 0.25) !important;
-        font-size: 14px !important;
-    }
-    
-    .stButton > button[type="primary"]:hover {
-        background: linear-gradient(45deg, #20b2aa, #87ceeb) !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 3px 10px rgba(32, 178, 170, 0.35) !important;
-    }
-    
-    /* フォーム内のボタンコンテナのパディング調整 */
-    .stForm .stButton {
-        padding-top: 0 !important;
-        margin-top: 0 !important;
-    }
-    
-    /* カラムの垂直配置を改善 */
-    .stForm [data-testid="column"] {
-        display: flex !important;
-        align-items: flex-end !important;
-    }
-    
-    /* テキスト入力とボタンの高さを揃える */
-    .stForm .stTextInput > div > div > input {
-        height: 40px !important;
-    }
-    
-    .stForm .stButton > button {
-        height: 40px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-    
-    /* メインコンテンツのパディング調整 */
-    .main .block-container {
-        padding-bottom: 20px !important;
-    }
-    
-    /* サイドバーとの重複を防ぐ */
-    .css-1d391kg {
-        padding-right: 1rem !important;
+        border-radius: 15px !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -553,7 +619,7 @@ def show_character_status():
     
     # ruriオブジェクトの初期化確認
     if 'ruri' not in st.session_state:
-        st.session_state.ruri = RuriCharacter()
+        st.session_state.ruri = initialize_ruri_character()
     ruri = st.session_state.ruri
     
     col1, col2 = st.columns(2)
@@ -591,7 +657,7 @@ def show_emotion_learning():
     if st.button("感情学習を実行") and viewer_comment:
         # ruriオブジェクトの初期化確認
         if 'ruri' not in st.session_state:
-            st.session_state.ruri = RuriCharacter()
+            st.session_state.ruri = initialize_ruri_character()
         ruri = st.session_state.ruri
         response = ruri.learn_emotion(emotion, viewer_comment)
         
@@ -642,7 +708,8 @@ def show_image_generation():
     )
     
     if st.button("プロンプト生成"):
-        prompt = generate_image_prompt_for_ruri(emotion_stage)
+        # プラガブル版では基本的なプロンプト生成を提供
+        prompt = generate_basic_image_prompt(emotion_stage)
         st.subheader("生成されたプロンプト")
         st.code(prompt, language="text")
         
@@ -652,6 +719,19 @@ def show_image_generation():
         st.write("- Midjourney") 
         st.write("- DALL-E")
         st.write("- その他の画像生成AI")
+
+def generate_basic_image_prompt(emotion_stage: str) -> str:
+    """基本的な画像生成プロンプト"""
+    base_prompt = "Beautiful anime girl character named Ruri from the play 'Ai no Iro', "
+    
+    stage_prompts = {
+        "monochrome": base_prompt + "monochrome world, black and white, learning about emotions, curious expression, dramatic lighting",
+        "partial_color": base_prompt + "partially colored world, some colors appearing, wonder in eyes, mixed black-white and colors",
+        "rainbow_transition": base_prompt + "rainbow transitions, multiple colors flowing, emotional awakening, vibrant atmosphere",
+        "full_color": base_prompt + "full colorful world, rainbow hair, emotional maturity, bright and lively, masterpiece quality"
+    }
+    
+    return stage_prompts.get(emotion_stage, base_prompt + "beautiful character design, high quality")
 
 def show_stream_settings():
     st.header("📺 配信設定")
@@ -667,7 +747,7 @@ def show_stream_settings():
     
     # ruriオブジェクトの初期化確認
     if 'ruri' not in st.session_state:
-        st.session_state.ruri = RuriCharacter()
+        st.session_state.ruri = initialize_ruri_character()
     ruri = st.session_state.ruri
     emotion_count = len(ruri.emotions_learned)
     
@@ -699,7 +779,7 @@ def show_web_prototype():
     
     # ruriオブジェクトの初期化確認
     if 'ruri' not in st.session_state:
-        st.session_state.ruri = RuriCharacter()
+        st.session_state.ruri = initialize_ruri_character()
     ruri = st.session_state.ruri
     
     # リアルタイム色変化ビジュアライザー
@@ -871,25 +951,55 @@ def show_web_prototype():
         if st.button("感情を体験してみる"):
             # ruriオブジェクトの初期化確認
             if 'ruri' not in st.session_state:
-                st.session_state.ruri = RuriCharacter()
+                st.session_state.ruri = initialize_ruri_character()
             response = ruri.learn_emotion(test_emotion, f"テスト: {test_emotion}の感情を体験中")
             st.success(f"感情「{test_emotion}」を体験しました！")
             st.rerun()
 
 def show_emotion_dashboard():
-    """感情ダッシュボード表示"""
+    """軽量感情ダッシュボード表示"""
     st.header("📊 感情ダッシュボード")
     st.caption("ルリの感情学習を可視化")
     
-    ruri = st.session_state.ruri
+    # ルリキャラクターの初期化
+    ruri = initialize_ruri_character()
+    if not ruri:
+        st.error("キャラクターの初期化に失敗しました")
+        return
     
     # 感情学習データの準備
     if 'emotion_history' not in st.session_state:
         st.session_state.emotion_history = []
     
-    # グラフ用データ
-    import plotly.express as px
-    import pandas as pd
+    # 軽量版: テキストベースの統計表示
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.metric("学習済み感情", f"{len(ruri.emotions_learned)}個")
+    
+    with col2:
+        st.metric("会話回数", f"{len(st.session_state.get('chat_messages', []))}回")
+    
+    with col3:
+        st.metric("色彩段階", ruri.current_color_stage)
+    
+    # 感情リスト表示（軽量）
+    st.subheader("🎭 学習済み感情")
+    if ruri.emotions_learned:
+        for i, emotion in enumerate(ruri.emotions_learned):
+            st.write(f"{i+1}. {emotion}")
+    else:
+        st.info("まだ感情を学習していません")
+    
+    # Plotlyチャートは必要な場合のみ読み込み
+    if st.button("📊 詳細グラフを表示"):
+        if load_plotly():
+            show_detailed_emotion_charts(ruri)
+        else:
+            st.error("グラフライブラリが利用できません")
+
+def show_detailed_emotion_charts(ruri):
+    """詳細な感情チャート（Plotly使用）"""
     from datetime import datetime, timedelta
     import random
     
@@ -906,55 +1016,58 @@ def show_emotion_dashboard():
         })
     
     if sample_data:
-        df = pd.DataFrame(sample_data)
+        # 軽量版: Pandasを使わずに直接データ表示
+        st.subheader("📊 感情学習データ")
         
-        col1, col2 = st.columns(2)
+        # シンプルなテーブル表示
+        for data in sample_data:
+            st.write(f"**{data['感情']}**: 学習回数 {data['学習回数']}回, 強度 {data['強度']:.2f}")
         
-        with col1:
-            # 感情別学習回数
-            fig_bar = px.bar(df, x="感情", y="学習回数", 
-                           title="感情別学習回数",
-                           color="学習回数",
-                           color_continuous_scale="rainbow")
-            st.plotly_chart(fig_bar, use_container_width=True)
+        # Plotlyが利用可能な場合のみチャート表示
+        plotly = load_plotly()
+        if plotly:
+            col1, col2 = st.columns(2)
             
-        with col2:
-            # 感情強度レーダーチャート
-            fig_radar = px.line_polar(df, r="強度", theta="感情", 
-                                    line_close=True,
-                                    title="感情強度バランス")
-            st.plotly_chart(fig_radar, use_container_width=True)
-        
-        # 色彩段階進化チャート
-        st.subheader("🌈 色彩段階の進化")
-        stages = ["monochrome", "partial_color", "rainbow_transition", "full_color"]
-        stage_names = ["モノクロ", "部分カラー", "虹色移行", "フルカラー"]
-        current_stage_index = stages.index(ruri.current_color_stage)
-        
-        progress_data = []
-        for i, (stage, name) in enumerate(zip(stages, stage_names)):
-            progress_data.append({
-                "段階": name,
-                "進捗": 100 if i <= current_stage_index else 0,
-                "色": f"hsl({i * 90}, 70%, 50%)"
-            })
-        
-        progress_df = pd.DataFrame(progress_data)
-        fig_progress = px.bar(progress_df, x="段階", y="進捗",
-                            title="色彩段階の進化",
-                            color="段階")
-        st.plotly_chart(fig_progress, use_container_width=True)
+            with col1:
+                # 感情別学習回数（バーチャート）
+                emotions = [d['感情'] for d in sample_data]
+                counts = [d['学習回数'] for d in sample_data]
+                
+                fig_bar = plotly.graph_objects.Figure(data=[
+                    plotly.graph_objects.Bar(x=emotions, y=counts, name="学習回数")
+                ])
+                fig_bar.update_layout(title="感情別学習回数")
+                st.plotly_chart(fig_bar, use_container_width=True)
+            
+            with col2:
+                # 感情強度レーダーチャート
+                intensities = [d['強度'] for d in sample_data]
+                
+                fig_radar = plotly.graph_objects.Figure()
+                fig_radar.add_trace(plotly.graph_objects.Scatterpolar(
+                    r=intensities,
+                    theta=emotions,
+                    fill='toself',
+                    name='感情強度'
+                ))
+                fig_radar.update_layout(
+                    title="感情強度バランス",
+                    polar=dict(
+                        radialaxis=dict(
+                            visible=True,
+                            range=[0, 1]
+                        )
+                    )
+                )
+                st.plotly_chart(fig_radar, use_container_width=True)
 
 def show_stream_simulator():
     """配信シミュレーター"""
     st.header("📺 AITuber配信シミュレーター")
     st.caption("Webブラウザ上で仮想的な配信体験")
     
-    # Session stateの初期化
-    if 'ruri' not in st.session_state:
-        st.session_state.ruri = RuriCharacter()
-    
-    ruri = st.session_state.ruri
+    # 統一初期化関数を使用
+    ruri = initialize_ruri_character()
     
     # 配信画面のレイアウト
     col1, col2 = st.columns([2, 1])
@@ -1167,4 +1280,5 @@ def show_stream_simulator():
         st.metric("配信時間", "00:15:30" if is_streaming else "00:00:00")
 
 # メイン関数を常に実行（Streamlit環境でのみ正常動作）
-main()
+if __name__ == "__main__":
+    main()
