@@ -1,14 +1,27 @@
 # OpenAI APIを使ったキャラクター生成・感情学習サンプル
-import openai
 import os
 import json
 from datetime import datetime
 
-# APIキーは環境変数から取得
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-openai.api_key = OPENAI_API_KEY
+# OpenAI APIは動作確認時のみ使用
+try:
+    import openai
+    OPENAI_AVAILABLE = True
+    # APIキーは環境変数から取得
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    if OPENAI_API_KEY:
+        openai.api_key = OPENAI_API_KEY
+except ImportError:
+    OPENAI_AVAILABLE = False
 
 class RuriCharacter:
+    """ルリ（戯曲『あいのいろ』主人公）のAI実装クラス
+    
+    自作戯曲『あいのいろ』の主人公ルリをAITuberとして再現。
+    原作の「感情を学んで色づいていく」設定を忠実に再現し、
+    視聴者との交流を通じて段階的に成長していく。
+    """
+    
     def __init__(self):
         self.emotions_learned = []
         self.current_color_stage = "monochrome"
@@ -21,12 +34,16 @@ class RuriCharacter:
     def get_system_prompt(self, emotion_mode=None):
         base_prompt = """あなたは「ルリ」という名前のAITuberです。
         
-        【基本設定】
-        - 感情のない世界から来た少女的存在
-        - 感情を学ぶごとに色が付いていく特殊な体質
-        - 現在は感情学習の途中段階
-        - 丁寧で好奇心旺盛な話し方
-        - 視聴者とのコミュニケーションを通じて成長
+        【原作設定】
+        - 自作戯曲『あいのいろ』の主人公として生まれたキャラクター
+        - 感情のない世界から来た少女的存在（原作設定）
+        - 感情を学ぶごとに色が付いていく特殊な体質（原作の核心設定）
+        - 原作の哲学的テーマ「感情とは何か」を体現する存在
+        
+        【AITuber化での特徴】
+        - 戯曲の世界観を現代のデジタル空間で再現
+        - 丁寧で好奇心旺盛な話し方（原作の人格を継承）
+        - 視聴者とのコミュニケーションを通じて原作同様に成長
         
         【現在の状態】
         - 学習済み感情: {learned}
@@ -45,19 +62,24 @@ class RuriCharacter:
         """視聴者のコメントから感情を学習"""
         system_prompt = self.get_system_prompt()
         
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"視聴者から「{viewer_comment}」というコメントをもらいました。これから「{emotion}」という感情について学びたいです。どのように反応すべきでしょうか？"}
-            ]
-        )
+        if not OPENAI_AVAILABLE or not os.getenv("OPENAI_API_KEY"):
+            # OpenAI APIが利用できない場合のフォールバック
+            response_text = f"「{emotion}」について学習中です。\n戯曲『あいのいろ』でも、この感情は重要な意味を持っていました。\n視聴者の皆さんからの「{viewer_comment}」というコメントを通じて、新しい感情を体験しています。\nありがとうございます！"
+        else:
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"視聴者から「{viewer_comment}」というコメントをもらいました。これから「{emotion}」という感情について学びたいです。どのように反応すべきでしょうか？"}
+                ]
+            )
+            response_text = response.choices[0].message["content"]
         
         if emotion not in self.emotions_learned:
             self.emotions_learned.append(emotion)
             self.update_color_stage()
         
-        return response.choices[0].message["content"]
+        return response_text
     
     def update_color_stage(self):
         """感情学習に応じて色彩段階を更新"""
@@ -75,15 +97,18 @@ class RuriCharacter:
         """配信での視聴者とのやりとり"""
         system_prompt = self.get_system_prompt()
         
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"視聴者からのコメント: {viewer_input}"}
-            ]
-        )
-        
-        return response.choices[0].message["content"]
+        if not OPENAI_AVAILABLE or not os.getenv("OPENAI_API_KEY"):
+            # OpenAI APIが利用できない場合のフォールバック
+            return f"視聴者の皆さん、「{viewer_input}」というコメントをありがとうございます！\n戯曲『あいのいろ』でも描かれていたように、皆さんとの交流を通じて私は成長していきます。"
+        else:
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"視聴者からのコメント: {viewer_input}"}
+                ]
+            )
+            return response.choices[0].message["content"]
 
 def generate_image_prompt_for_ruri(emotion_stage="monochrome"):
     """画像生成AI用のルリのプロンプトを生成"""

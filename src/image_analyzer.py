@@ -4,8 +4,14 @@ import cv2
 import numpy as np
 from PIL import Image, ImageStat
 import colorsys
-import openai
 import os
+
+# OpenAI APIは動作確認時のみ使用
+try:
+    import openai
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
 
 class RuriImageAnalyzer:
     def __init__(self, imageboard_path):
@@ -102,7 +108,7 @@ class RuriImageAnalyzer:
         ルリちゃんの既存設定（感情を学んで色づく存在）に合わせて提案してください。
         """
         
-        if os.getenv("OPENAI_API_KEY"):
+        if os.getenv("OPENAI_API_KEY") and OPENAI_AVAILABLE:
             response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
                 messages=[
@@ -112,7 +118,7 @@ class RuriImageAnalyzer:
             )
             return response.choices[0].message["content"]
         else:
-            return f"色彩分析結果: {color_descriptions}"
+            return f"色彩分析結果: {color_descriptions}\n\n（OpenAI APIが利用できません。基本的な色彩情報のみ表示）"
     
     def create_color_palette_config(self):
         """Live2D/3D用のカラーパレット設定を生成"""

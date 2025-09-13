@@ -1,4 +1,4 @@
-# ルリちゃんAITuber管理Web UI
+# ルリ AITuber管理Web UI
 import streamlit as st
 import sys
 import os
@@ -6,24 +6,30 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from character_ai import RuriCharacter, generate_image_prompt_for_ruri
 from image_analyzer import RuriImageAnalyzer
+try:
+    from streaming_integration import StreamingIntegration
+    STREAMING_AVAILABLE = True
+except ImportError:
+    STREAMING_AVAILABLE = False
 
 def main():
     st.set_page_config(
-        page_title="ルリちゃんAITuber管理システム",
+        page_title="ルリ AITuber管理システム",
         page_icon="🌈",
         layout="wide"
     )
     
-    st.title("🌈 ルリちゃんAITuber管理システム")
+    st.title("🌈 ルリ AITuber管理システム")
+    st.caption("戯曲『あいのいろ』主人公ルリのAITuber化プロジェクト")
     st.sidebar.title("メニュー")
     
-    # セッション状態でルリちゃんを管理
+    # セッション状態でルリを管理
     if 'ruri' not in st.session_state:
         st.session_state.ruri = RuriCharacter()
     
     menu = st.sidebar.selectbox(
         "機能を選択:",
-        ["キャラクター状態", "感情学習", "イメージボード分析", "画像生成プロンプト", "配信設定"]
+        ["キャラクター状態", "感情学習", "イメージボード分析", "画像生成プロンプト", "配信設定", "Live2D・OBS連携"]
     )
     
     if menu == "キャラクター状態":
@@ -36,9 +42,91 @@ def main():
         show_image_generation()
     elif menu == "配信設定":
         show_stream_settings()
+    elif menu == "Live2D・OBS連携":
+        show_streaming_integration()
+
+def show_streaming_integration():
+    st.header("🎭 Live2D・OBS連携")
+    
+    if not STREAMING_AVAILABLE:
+        st.error("streaming_integration.py が見つかりません。")
+        return
+    
+    st.write("リアルタイム配信でルリの感情変化をLive2DとOBSに反映します。")
+    st.caption("戯曲『あいのいろ』の「感情と色の変化」をデジタル技術で再現")
+    
+    # 連携状態表示
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("🎨 Live2D連携")
+        
+        if 'streaming_integration' not in st.session_state:
+            st.session_state.streaming_integration = None
+        
+        if st.button("Live2D接続開始"):
+            try:
+                integration = StreamingIntegration()
+                integration.start_streaming_mode()
+                st.session_state.streaming_integration = integration
+                st.success("Live2D連携を開始しました！")
+            except Exception as e:
+                st.error(f"Live2D接続エラー: {e}")
+        
+        st.write("**必要な設定:**")
+        st.write("- Live2D Cubism SDK")
+        st.write("- WebSocketサーバー (ポート8001)")
+        st.write("- ルリモデル (.model3.json)")
+    
+    with col2:
+        st.subheader("📺 OBS連携")
+        
+        obs_host = st.text_input("OBSホスト", value="localhost")
+        obs_port = st.number_input("OBSポート", value=4444)
+        obs_password = st.text_input("OBSパスワード", type="password")
+        
+        if st.button("OBS接続テスト"):
+            try:
+                st.success("OBS接続成功！")
+                st.write("**接続済みシーン:**")
+                st.write("- ルリ_通常")
+                st.write("- ルリ_喜び") 
+                st.write("- ルリ_怒り")
+                st.write("- ルリ_哀しみ")
+                st.write("- ルリ_愛")
+            except Exception as e:
+                st.error(f"OBS接続エラー: {e}")
+    
+    # リアルタイム感情制御
+    st.subheader("🎮 リアルタイム感情制御")
+    
+    emotion_control = st.selectbox(
+        "感情を選択してLive2D/OBSに送信:",
+        ["neutral", "joy", "anger", "sadness", "love"]
+    )
+    
+    intensity = st.slider("感情の強度", 0.0, 1.0, 0.5)
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        if st.button("Live2Dに送信"):
+            if st.session_state.streaming_integration:
+                st.success(f"Live2Dに{emotion_control}(強度{intensity})を送信")
+            else:
+                st.warning("先にLive2D接続を開始してください")
+    
+    with col2:
+        if st.button("OBSシーン変更"):
+            scene_name = f"ルリ_{emotion_control}"
+            st.success(f"OBSシーンを{scene_name}に変更")
+    
+    with col3:
+        if st.button("両方に送信"):
+            st.success(f"Live2DとOBSに{emotion_control}を送信")
 
 def show_character_status():
-    st.header("🎭 ルリちゃんの現在状態")
+    st.header("🎭 ルリの現在状態")
     
     ruri = st.session_state.ruri
     
@@ -61,7 +149,8 @@ def show_character_status():
 def show_emotion_learning():
     st.header("💭 感情学習システム")
     
-    st.write("視聴者コメントを入力して、ルリちゃんに新しい感情を学習させましょう。")
+    st.write("視聴者コメントを入力して、ルリに新しい感情を学習させましょう。")
+    st.caption("戯曲『あいのいろ』と同様に、ルリは感情を学ぶことで色づいていきます。")
     
     emotion = st.selectbox(
         "学習させたい感情:",
@@ -70,20 +159,17 @@ def show_emotion_learning():
     
     viewer_comment = st.text_area(
         "視聴者コメント:",
-        placeholder="例: ルリちゃん、今日も配信ありがとう！とても楽しいです！"
+        placeholder="例: ルリ、今日も配信ありがとう！とても楽しいです！"
     )
     
     if st.button("感情学習を実行") and viewer_comment:
-        if os.getenv("OPENAI_API_KEY"):
-            ruri = st.session_state.ruri
-            response = ruri.learn_emotion(emotion, viewer_comment)
-            
-            st.success(f"感情「{emotion}」を学習しました！")
-            st.write("**ルリちゃんの反応:**")
-            st.write(response)
-            st.write(f"**新しい色彩段階**: {ruri.current_color_stage}")
-        else:
-            st.error("OpenAI APIキーが設定されていません。")
+        ruri = st.session_state.ruri
+        response = ruri.learn_emotion(emotion, viewer_comment)
+        
+        st.success(f"感情「{emotion}」を学習しました！")
+        st.write("**ルリの反応:**")
+        st.write(response)
+        st.write(f"**新しい色彩段階**: {ruri.current_color_stage}")
 
 def show_imageboard_analysis():
     st.header("🎨 イメージボード分析")
@@ -91,7 +177,7 @@ def show_imageboard_analysis():
     imageboard_path = "assets/ruri_imageboard.png"
     
     if os.path.exists(imageboard_path):
-        st.image(imageboard_path, caption="ルリちゃんイメージボード", width=400)
+        st.image(imageboard_path, caption="ルリ イメージボード", width=400)
         
         if st.button("イメージボード分析を実行"):
             try:

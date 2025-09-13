@@ -1,0 +1,37 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "ルリちゃんWebUI起動",
+			"type": "shell",
+			"command": "streamlit run webui/app.py",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Git Status確認",
+			"type": "shell",
+			"command": "cd \"c:\\dev\\AITuber\" && git status",
+			"group": "build"
+		},
+		{
+			"label": "Git Status確認",
+			"type": "shell",
+			"command": "cd \"c:\\dev\\AITuber\"; git status",
+			"group": "build"
+		},
+		{
+			"label": "Git Status確認",
+			"type": "shell",
+			"command": "git status",
+			"group": "build"
+		},
+		{
+			"label": "Git Commit実行",
+			"type": "shell",
+			"command": "git add . ; git commit -m '戯曲『あいのいろ』原作コンテクストを反映'",
+			"group": "build"
+		}
+	]
+}
