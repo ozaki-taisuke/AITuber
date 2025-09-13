@@ -32,6 +32,12 @@
 			"type": "shell",
 			"command": "git add . ; git commit -m '戯曲『あいのいろ』原作コンテクストを反映'",
 			"group": "build"
+		},
+		{
+			"label": "Git Push実行",
+			"type": "shell",
+			"command": "git push origin main",
+			"group": "build"
 		}
 	]
 }
