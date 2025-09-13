@@ -10,6 +10,22 @@
 			"group": "build"
 		},
 		{
+			"label": "ルリちゃんWebUI固定ポート起動",
+			"type": "shell",
+			"command": "python -m streamlit run webui/app.py --server.port 8501 --server.address localhost",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			}
+		},
+		{
 			"label": "Git Status確認",
 			"type": "shell",
 			"command": "cd \"c:\\dev\\AITuber\" && git status",
@@ -37,6 +53,107 @@
 			"label": "Git Push実行",
 			"type": "shell",
 			"command": "git push origin main",
+			"group": "build"
+		},
+		{
+			"label": "Streamlitチェック",
+			"type": "shell",
+			"command": "python -c \"import streamlit; print('Streamlit OK')\"",
+			"group": "build"
+		},
+		{
+			"label": "Streamlitチェック",
+			"type": "shell",
+			"command": "python -c 'import streamlit; print(\"Streamlit OK\")'",
+			"group": "build"
+		},
+		{
+			"label": "インポートテスト",
+			"type": "shell",
+			"command": "python test_imports.py",
+			"group": "build"
+		},
+		{
+			"label": "WebUI直接実行",
+			"type": "shell",
+			"command": "python webui/app.py",
+			"group": "build"
+		},
+		{
+			"label": "WebUI正常起動",
+			"type": "shell",
+			"command": "streamlit run webui/app.py",
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "WebUI正常起動",
+			"type": "shell",
+			"command": "python -m streamlit run webui/app.py",
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "Streamlit WebUI起動",
+			"type": "shell",
+			"command": "python -m streamlit run webui\\app.py",
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "WebUI修正版起動",
+			"type": "shell",
+			"command": "python -m streamlit run webui\\app.py",
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "WebUI正常版起動",
+			"type": "shell",
+			"command": "python -m streamlit run webui\\app.py",
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "WebUIビジュアル改善版起動",
+			"type": "shell",
+			"command": "python -m streamlit run webui\\app.py",
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "WebUI最終版起動",
+			"type": "shell",
+			"command": "python -m streamlit run webui\\app.py",
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "WebUIメニュー修正版起動",
+			"type": "shell",
+			"command": "python -m streamlit run webui\\app.py",
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "WebUIアイコン統一版起動",
+			"type": "shell",
+			"command": "python -m streamlit run webui\\app.py",
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "WebUI文字化け修正版起動",
+			"type": "shell",
+			"command": "python -m streamlit run webui\\app.py",
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "WebUIメニュー統一版起動",
+			"type": "shell",
+			"command": "python -m streamlit run webui\\app.py",
+			"isBackground": true,
 			"group": "build"
 		}
 	]

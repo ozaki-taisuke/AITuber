@@ -2,7 +2,6 @@
 import streamlit as st
 import sys
 import os
-from datetime import datetime
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from character_ai import RuriCharacter, generate_image_prompt_for_ruri
@@ -43,58 +42,6 @@ def main():
         font-weight: bold;
         margin: 0.5rem 0;
     }
-    
-    /* 送信ボタンのスタイル - 優しい青緑系 */
-    .stButton > button[type="primary"] {
-        background: linear-gradient(45deg, #87ceeb, #20b2aa) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 20px !important;
-        padding: 0.4rem 1.2rem !important;
-        font-weight: 500 !important;
-        box-shadow: 0 2px 6px rgba(32, 178, 170, 0.25) !important;
-        font-size: 14px !important;
-    }
-    
-    .stButton > button[type="primary"]:hover {
-        background: linear-gradient(45deg, #20b2aa, #87ceeb) !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 3px 10px rgba(32, 178, 170, 0.35) !important;
-    }
-    
-    /* フォーム内のボタンコンテナのパディング調整 */
-    .stForm .stButton {
-        padding-top: 0 !important;
-        margin-top: 0 !important;
-    }
-    
-    /* カラムの垂直配置を改善 */
-    .stForm [data-testid="column"] {
-        display: flex !important;
-        align-items: flex-end !important;
-    }
-    
-    /* テキスト入力とボタンの高さを揃える */
-    .stForm .stTextInput > div > div > input {
-        height: 40px !important;
-    }
-    
-    .stForm .stButton > button {
-        height: 40px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-    
-    /* メインコンテンツのパディング調整 */
-    .main .block-container {
-        padding-bottom: 20px !important;
-    }
-    
-    /* サイドバーとの重複を防ぐ */
-    .css-1d391kg {
-        padding-right: 1rem !important;
-    }
     </style>
     """, unsafe_allow_html=True)
     
@@ -116,149 +63,91 @@ def main():
         st.title("🌠 ルリ AITuber管理システム")
         st.caption("戯曲『あいのいろ』主人公ルリのAI化プロジェクト")
         
-        # クイックアクション - 説明文の下に配置
-        st.markdown("### ⚡ クイックアクション")
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            if st.button("🎭 キャラクター詳細", use_container_width=True):
-                # サイドバーのメニューを直接変更
-                st.session_state.menu_override = "🎭 キャラクター状態"
-                st.success("キャラクター詳細ページに移動中...")
-                st.rerun()
-        
-        with col2:
-            if st.button("📊 学習状況", use_container_width=True):
-                # サイドバーのメニューを直接変更
-                st.session_state.menu_override = "💭 感情学習"
-                st.success("学習状況ページに移動中...")
-                st.rerun()
+        # プロジェクト概要を追加
+        st.markdown("""
+        **💫 感情を学習して色づいていくAIバーチャルYouTuber**
+        - 原作: 自作戯曲『あいのいろ』（ozaki-taisuke 作）
+        - 技術: Python + Streamlit + OpenAI API
+        - コンセプト: 感情学習による段階的な色彩変化
+        """)
     
     with header_col3:
-        # 右側: 空きスペース（将来的に他の要素を配置可能）
-        st.write("")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown("---")  # セクション区切り
-
-    # メインコンテンツエリア - チャット入力を最上部に配置（X風）
-    st.markdown("### 💬 ルリに話しかける")
-    
-    # チャット入力フォーム（会話ログより上に配置）
-    with st.form("main_chat_form", clear_on_submit=True):
-        col1, col2 = st.columns([5, 1])
-        with col1:
-            user_input = st.text_input(
-                "メッセージを入力:", 
-                placeholder="今日はどんな気分？", 
-                key="main_chat_input",
-                label_visibility="collapsed"
-            )
-        with col2:
-            submit_button = st.form_submit_button("送信", use_container_width=True, type="primary")
-
-    # チャット処理（送信直後）
-    if submit_button and user_input:
-        # チャット履歴の初期化
-        if 'chat_messages' not in st.session_state:
-            st.session_state.chat_messages = []
+        # 右側: 現在の状態表示
+        if 'ruri' not in st.session_state:
+            st.session_state.ruri = RuriCharacter()
         
-        # ユーザーメッセージを追加
-        st.session_state.chat_messages.append({
-            'role': 'user',
-            'content': user_input,
-            'timestamp': datetime.now()
-        })
+        ruri = st.session_state.ruri
         
-        # 簡易感情分析
-        emotion_keywords = {
-            '喜': ['嬉しい', '楽しい', '幸せ', '良い', 'ありがとう'],
-            '哀': ['悲しい', 'つらい', '寂しい', '泣く'],
-            '怒': ['怒る', 'むかつく', 'イライラ', '腹立つ'],
-            '愛': ['好き', '愛', '大切', '想う'],
-            '恐': ['怖い', '不安', '心配', 'びくびく'],
-            '驚': ['びっくり', '驚く', 'すごい', 'えっ'],
-            '嫌': ['嫌い', '気持ち悪い', 'やだ'],
-            '期': ['楽しみ', '期待', 'わくわく', '待つ']
+        st.markdown("### 🎭 ルリの現在の状態")
+        
+        # 感情段階の視覚的表示
+        emotion_stage_colors = {
+            "monochrome": "⚫",
+            "partial_color": "🔵", 
+            "rainbow_transition": "🌈",
+            "full_color": "🌟"
         }
         
-        detected_emotion = "？"
-        for emotion, keywords in emotion_keywords.items():
-            if any(keyword in user_input for keyword in keywords):
-                detected_emotion = emotion
-                break
+        stage_icon = emotion_stage_colors.get(ruri.current_color_stage, "❓")
+        st.metric(
+            "感情段階", 
+            f"{stage_icon} {ruri.current_color_stage}",
+            f"{len(ruri.emotions_learned)}種類学習済み"
+        )
         
-        # 簡潔なフォールバック応答（サーバー不要）
-        responses_by_emotion = {
-            '喜': ["わー、嬉しそうですね！私も一緒に嬉しくなります🌟", "楽しい気持ちが伝わってきます！", "ポジティブなエネルギーを感じます✨"],
-            '哀': ["大丈夫ですか？そんな時もありますよね...💙", "悲しい気持ち、わかります。一人じゃないですよ", "つらい時は無理しないでくださいね"],
-            '怒': ["何かあったんですか？お話聞きますよ", "怒りの感情も大切な気持ちですね", "落ち着いて、深呼吸してみましょう"],
-            '愛': ["素敵な気持ちですね💖", "愛に満ちた言葉をありがとうございます", "温かい気持ちが伝わってきます"],
-            '恐': ["大丈夫、怖くないですよ。私がそばにいます", "不安な時は一緒に考えましょう", "安心してください💫"],
-            '驚': ["わぁ！びっくりしましたね！", "驚きの気持ち、一緒に味わいましょう✨", "すごいことがあったんですね！"],
-            '嫌': ["嫌な気持ちになることもありますよね", "無理しないでください", "気持ちに正直でいいんですよ"],
-            '期': ["楽しみですね！わくわくします🌟", "期待感が伝わってきます", "素敵なことが待っていそうですね"],
-            '？': ["そうなんですね", "なるほど...", "お話してくれてありがとうございます", "もう少し詳しく教えてください"]
-        }
-        
-        import random
-        ruri_response = random.choice(responses_by_emotion.get(detected_emotion, responses_by_emotion['？']))
-        
-        # ルリの応答を追加
-        st.session_state.chat_messages.append({
-            'role': 'assistant',
-            'content': ruri_response,
-            'detected_emotion': detected_emotion,
-            'timestamp': datetime.now()
-        })
-        
-        st.rerun()
-
-    st.markdown("---")  # 入力エリアと会話ログの区切り
-    
-    # 会話ログ表示エリア
-    st.markdown("### 🎬 ルリとの会話ログ")
-    
-    # チャットメッセージ表示エリア
-    chat_container = st.container()
-    with chat_container:
-        if 'chat_messages' in st.session_state:
-            for msg in st.session_state.chat_messages[-5:]:  # 最新5件のみ表示
-                if msg['role'] == 'user':
-                    with st.chat_message("user"):
-                        st.write(msg['content'])
-                else:
-                    with st.chat_message("assistant", avatar="🌠"):
-                        st.write(msg['content'])
-                        if 'detected_emotion' in msg:
-                            st.caption(f"検出された感情: {msg['detected_emotion']}")
+        # 色相値の表示
+        if hasattr(ruri, 'current_hue') and ruri.current_hue is not None:
+            st.metric("現在の色相", f"{ruri.current_hue:.1f}°")
         else:
-            st.info("💫 ルリと会話を始めてみましょう！")
-
-    # ステータス表示をチャットエリアの下に配置
-    st.markdown("---")
-    st.markdown("### 📊 現在のステータス")
+            st.metric("現在の色相", "モノクロ")
     
-    # 簡易統計表示
-    col1, col2, col3 = st.columns(3)
+    st.markdown("---")  # セクション区切り
     
-    with col1:
-        total_messages = len(st.session_state.get('chat_messages', []))
-        st.metric("総メッセージ", f"{total_messages}件")
-    with col2:
-        current_mode = "🌐 ブラウザ版"
-        st.metric("現在のモード", current_mode)
-    with col3:
-        # 感情の種類をカウント
-        emotions_detected = set()
-        if 'chat_messages' in st.session_state:
-            for msg in st.session_state.chat_messages:
-                if msg.get('role') == 'assistant' and 'detected_emotion' in msg:
-                    if msg['detected_emotion'] != "？":
-                        emotions_detected.add(msg['detected_emotion'])
-        st.metric("検出した感情", f"{len(emotions_detected)}種類")
+    # 現在のモード表示をメイン画面にも（動的更新対応）
+    production_mode = st.session_state.get('production_mode', False)
     
-    # サイドバーメニュー
+    # モード切り替え時のアニメーション効果付き表示
+    if production_mode:
+        st.success("🚀 **本番環境モード**: 全機能が利用可能です（Live2D・OBS連携含む）")
+        
+        # 本番モード時の追加情報
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("利用可能機能", "12個", "8個追加")
+        with col2:
+            st.metric("外部連携", "有効", "Live2D・OBS")
+        with col3:
+            st.metric("配信レベル", "プロダクション", "フル機能")
+            
+    else:
+        st.info("🌐 **Webプロトタイプモード**: ブラウザ完結型機能で気軽にお試しできます")
+        
+        # Webモード時の情報
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("利用可能機能", "4個", "Web限定")
+        with col2:
+            st.metric("外部連携", "なし", "ブラウザ完結")
+        with col3:
+            st.metric("配信レベル", "プロトタイプ", "お試し版")
+        
+        with st.expander("💡 本番環境モードについて"):
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write("**追加で利用可能になる機能:**")
+                st.write("• Live2D Cubism SDK連携")
+                st.write("• OBS Studio WebSocket連携")
+                st.write("• 外部ソフトとのリアルタイム通信")
+                st.write("• プロダクション配信設定")
+            
+            with col2:
+                st.write("**必要な準備:**")
+                st.write("• Live2D Cubism Editor")
+                st.write("• OBS Studio + WebSocketプラグイン")
+                st.write("• 追加Pythonライブラリ")
+                st.write("• 各種設定ファイル")
+    
+    # モード切り替えスイッチをサイドバーの最上部に配置
     st.sidebar.title("⚙️ システム設定")
     
     # 前回のモード状態を保存
@@ -276,12 +165,13 @@ def main():
         # モード変更を検知した場合の即座のフィードバック
         if production_mode:
             with st.sidebar:
-                with st.spinner("� 本番環境モードに切り替えています..."):
+                with st.spinner("🚀 本番環境モードに切り替えています..."):
                     st.session_state.production_mode = production_mode
+                    # 短いローディング時間で視覚的フィードバック
                     import time
                     time.sleep(0.3)
                 st.success("✅ 本番環境モードが有効になりました！")
-                st.balloons()
+                st.balloons()  # 祝福エフェクト
         else:
             with st.sidebar:
                 with st.spinner("🌐 Webプロトタイプモードに切り替えています..."):
@@ -289,34 +179,50 @@ def main():
                     import time
                     time.sleep(0.3)
                 st.info("✅ Webプロトタイプモードが有効になりました！")
+        # ページを再実行してメニューを更新
         st.rerun()
     else:
+        # モード変更がない場合は通常処理
         st.session_state.production_mode = production_mode
     
-    # モードに応じてメニュー項目を動的に変更
-    base_menu_items = ["🏠 TOP"]
-    
+    # モード表示（拡張版）
     if production_mode:
-        st.sidebar.success("🚀 **本番環境モード**: 有効")
+        st.sidebar.success("🚀 本番環境モード: 有効")
         st.sidebar.caption("Live2D・OBS連携機能が利用可能です")
+        
+        # 本番モード時の追加機能表示
+        with st.sidebar.expander("🔧 本番機能詳細", expanded=False):
+            st.write("**利用可能な機能:**")
+            st.write("• Live2D Cubism SDK連携")
+            st.write("• OBS Studio WebSocket連携")
+            st.write("• プロダクション配信設定")
+            st.write("• 外部ソフトリアルタイム通信")
     else:
-        st.sidebar.info("🌐 **Webプロトタイプモード**: 有効")
+        st.sidebar.info("🌐 Webプロトタイプモード: 有効")
         st.sidebar.caption("ブラウザ完結型機能のみ利用可能です")
         
+        # Webモード時の機能説明
+        with st.sidebar.expander("🌠 Web機能詳細", expanded=False):
+            st.write("**利用可能な機能:**")
+            st.write("• アバター可視化プロトタイプ")
+            st.write("• 感情分析ダッシュボード")
+            st.write("• インタラクティブチャット")
+            st.write("• 配信シミュレーター")
     
-    # モードに応じてメニュー項目を動的に変更
-    base_menu_items = ["🏠 TOP"]
+    st.sidebar.markdown("---")
     
-    detailed_menu_items = [
-        "🎭 キャラクター状態", 
-        "💭 感情学習", 
-        "🎨 イメージボード分析", 
-        "🖼️ 画像生成プロンプト"
+    # モードに応じてメニュー項目を動的に変更（視覚的区別付き）
+    base_menu_items = [
+        "キャラクター状態", 
+        "感情学習", 
+        "イメージボード分析", 
+        "画像生成プロンプト"
     ]
     
     web_prototype_items = [
         "🌠 Webプロトタイプ", 
         "📊 感情ダッシュボード", 
+        "🎮 インタラクティブチャット", 
         "📺 配信シミュレーター"
     ]
     
@@ -325,64 +231,59 @@ def main():
         "🔧 Live2D・OBS連携"
     ]
     
-    # メニュー構成を動的に作成
+    # メニューヘッダーに現在のモード表示を追加
     if production_mode:
-        menu_items = base_menu_items + detailed_menu_items + production_items + web_prototype_items
+        menu_count = len(base_menu_items) + len(production_items) + len(web_prototype_items)
+        st.sidebar.title("📋 メニュー（🚀本番環境）")
+        st.sidebar.caption(f"全機能利用可能（{menu_count}項目）")
     else:
-        menu_items = base_menu_items + detailed_menu_items + web_prototype_items
+        menu_count = len(base_menu_items) + len(web_prototype_items)
+        st.sidebar.title("📋 メニュー（🌐Web版）")
+        st.sidebar.caption(f"ブラウザ完結機能のみ（{menu_count}項目）")
     
-    # クイックアクションからのメニューオーバーライドをチェック
-    if 'menu_override' in st.session_state:
-        target_menu = st.session_state.menu_override
-        del st.session_state.menu_override
-        
-        # 対象メニューのインデックスを取得
-        if target_menu in menu_items:
-            menu_index = menu_items.index(target_menu)
-            menu = st.sidebar.selectbox(
-                "🎯 利用する機能:",
-                menu_items,
-                index=menu_index,
-                key=f"menu_selector_{production_mode}",
-                help="使いたい機能を選択してください"
-            )
-        else:
-            # メニューが見つからない場合はTOPページに
-            menu = st.sidebar.selectbox(
-                "🎯 利用する機能:",
-                menu_items,
-                key=f"menu_selector_{production_mode}",
-                help="使いたい機能を選択してください"
-            )
+    # メニュー構成を動的に作成
+    if not production_mode:
+        # Webプロトタイプモード: 基本機能 + Web機能のみ表示
+        menu_items = base_menu_items + web_prototype_items
+        # メニュー下部に切り替え案内を表示
+        with st.sidebar:
+            st.markdown("---")
+            st.info("💡 本番環境モードでさらに多くの機能が利用可能です")
+            st.caption(f"追加機能: {', '.join([item.replace('🚀 ', '').replace('🔧 ', '') for item in production_items])}")
     else:
-        menu = st.sidebar.selectbox(
-            "🎯 利用する機能:",
-            menu_items,
-            key=f"menu_selector_{production_mode}",
-            help="使いたい機能を選択してください"
-        )
+        # 本番環境モード: 全機能表示
+        menu_items = base_menu_items + production_items + web_prototype_items
+        # メニュー下部に機能案内を表示
+        with st.sidebar:
+            st.markdown("---")
+            st.success("🎯 全機能が利用可能です")
     
-    # メインコンテンツエリア - メニューが🏠 TOPの場合はチャット機能を既に上部に表示済み
-    if menu == "� TOP":
-        # TOPページのチャット機能は既に上部に表示済みなので、ここでは何もしない
-        pass
+    menu = st.sidebar.selectbox(
+        "機能を選択:",
+        menu_items,
+        key=f"menu_selector_{production_mode}"  # モード切り替え時にselectboxをリセット
+    )
     
-    elif menu == "🎭 キャラクター状態":
+    if menu == "キャラクター状態":
         show_character_status()
-    elif menu == "💭 感情学習":
+    elif menu == "感情学習":
         show_emotion_learning()
-    elif menu == "🎨 イメージボード分析":
+    elif menu == "イメージボード分析":
         show_imageboard_analysis()
-    elif menu == "🖼️ 画像生成プロンプト":
+    elif menu == "画像生成プロンプト":
         show_image_generation()
     elif menu == "🚀 配信設定":
+        # 本番環境モードでのみアクセス可能
         show_stream_settings()
     elif menu == "🔧 Live2D・OBS連携":
+        # 本番環境モードでのみアクセス可能
         show_streaming_integration()
     elif menu == "🌠 Webプロトタイプ":
         show_web_prototype()
     elif menu == "📊 感情ダッシュボード":
         show_emotion_dashboard()
+    elif menu == "🎮 インタラクティブチャット":
+        show_interactive_chat()
     elif menu == "📺 配信シミュレーター":
         show_stream_simulator()
 
@@ -551,9 +452,6 @@ def show_streaming_integration():
 def show_character_status():
     st.header("🎭 ルリの現在状態")
     
-    # ruriオブジェクトの初期化確認
-    if 'ruri' not in st.session_state:
-        st.session_state.ruri = RuriCharacter()
     ruri = st.session_state.ruri
     
     col1, col2 = st.columns(2)
@@ -589,9 +487,6 @@ def show_emotion_learning():
     )
     
     if st.button("感情学習を実行") and viewer_comment:
-        # ruriオブジェクトの初期化確認
-        if 'ruri' not in st.session_state:
-            st.session_state.ruri = RuriCharacter()
         ruri = st.session_state.ruri
         response = ruri.learn_emotion(emotion, viewer_comment)
         
@@ -665,9 +560,6 @@ def show_stream_settings():
     
     st.subheader("配信コンテンツ提案")
     
-    # ruriオブジェクトの初期化確認
-    if 'ruri' not in st.session_state:
-        st.session_state.ruri = RuriCharacter()
     ruri = st.session_state.ruri
     emotion_count = len(ruri.emotions_learned)
     
@@ -697,9 +589,6 @@ def show_web_prototype():
     st.header("🌠 Webプロトタイプ - ブラウザ完結型AITuber")
     st.caption("外部ソフト不要！ブラウザだけでルリの色変化を体験")
     
-    # ruriオブジェクトの初期化確認
-    if 'ruri' not in st.session_state:
-        st.session_state.ruri = RuriCharacter()
     ruri = st.session_state.ruri
     
     # リアルタイム色変化ビジュアライザー
@@ -869,9 +758,6 @@ def show_web_prototype():
         test_emotion = st.selectbox("感情を選択してビジュアル確認:", ["喜び", "怒り", "哀しみ", "愛"])
         
         if st.button("感情を体験してみる"):
-            # ruriオブジェクトの初期化確認
-            if 'ruri' not in st.session_state:
-                st.session_state.ruri = RuriCharacter()
             response = ruri.learn_emotion(test_emotion, f"テスト: {test_emotion}の感情を体験中")
             st.success(f"感情「{test_emotion}」を体験しました！")
             st.rerun()
@@ -945,14 +831,100 @@ def show_emotion_dashboard():
                             color="段階")
         st.plotly_chart(fig_progress, use_container_width=True)
 
+def show_interactive_chat():
+    """インタラクティブチャット機能"""
+    st.header("🎮 インタラクティブチャット")
+    st.caption("ルリとリアルタイムで会話して感情を学習させよう")
+    
+    ruri = st.session_state.ruri
+    
+    # チャット履歴の初期化
+    if 'chat_history' not in st.session_state:
+        st.session_state.chat_history = [
+            {"role": "ruri", "message": "こんにちは！私はルリです。戯曲『あいのいろ』から来ました。皆さんとお話しすることで、新しい感情を学んでいきたいと思います！", "emotion": "neutral"}
+        ]
+    
+    # チャット表示エリア
+    chat_container = st.container()
+    
+    with chat_container:
+        for chat in st.session_state.chat_history:
+            if chat["role"] == "user":
+                with st.chat_message("user"):
+                    st.write(chat["message"])
+            else:
+                with st.chat_message("assistant", avatar="🌠"):
+                    st.write(chat["message"])
+                    if "emotion" in chat and chat["emotion"] != "neutral":
+                        st.caption(f"🎭 感情: {chat['emotion']}")
+    
+    # ユーザー入力
+    col1, col2 = st.columns([3, 1])
+    
+    with col1:
+        user_input = st.text_input("ルリにメッセージを送る:", key="user_chat_input")
+    
+    with col2:
+        emotion_hint = st.selectbox("感情のヒント:", ["自動検出", "喜び", "怒り", "哀しみ", "愛", "驚き", "恐れ"])
+    
+    if st.button("送信") and user_input:
+        # ユーザーメッセージを履歴に追加
+        st.session_state.chat_history.append({
+            "role": "user", 
+            "message": user_input
+        })
+        
+        # 感情検出（簡易版）
+        detected_emotion = "neutral"
+        if emotion_hint != "自動検出":
+            detected_emotion = emotion_hint
+        else:
+            # 簡単な感情検出ロジック
+            if any(word in user_input for word in ["嬉しい", "楽しい", "ありがとう", "素晴らしい"]):
+                detected_emotion = "喜び"
+            elif any(word in user_input for word in ["悲しい", "つらい", "寂しい"]):
+                detected_emotion = "哀しみ"
+            elif any(word in user_input for word in ["愛してる", "大好き", "可愛い"]):
+                detected_emotion = "愛"
+            elif any(word in user_input for word in ["怒り", "ムカつく", "腹立つ"]):
+                detected_emotion = "怒り"
+        
+        # ルリの応答生成
+        if detected_emotion != "neutral":
+            response = ruri.learn_emotion(detected_emotion, user_input)
+        else:
+            response = ruri.generate_stream_response(user_input)
+        
+        # ルリの応答を履歴に追加
+        st.session_state.chat_history.append({
+            "role": "ruri",
+            "message": response,
+            "emotion": detected_emotion
+        })
+        
+        # 感情学習の通知
+        if detected_emotion != "neutral":
+            st.success(f"✨ ルリが「{detected_emotion}」の感情を学習しました！")
+            
+        st.rerun()
+    
+    # チャット統計
+    st.subheader("📊 会話統計")
+    total_messages = len([chat for chat in st.session_state.chat_history if chat["role"] == "user"])
+    emotions_learned_count = len([chat for chat in st.session_state.chat_history if chat.get("emotion", "neutral") != "neutral"])
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("総メッセージ数", total_messages)
+    with col2:
+        st.metric("感情学習回数", emotions_learned_count)
+    with col3:
+        st.metric("現在の色彩段階", ruri.current_color_stage.replace("_", " ").title())
+
 def show_stream_simulator():
     """配信シミュレーター"""
     st.header("📺 AITuber配信シミュレーター")
     st.caption("Webブラウザ上で仮想的な配信体験")
-    
-    # Session stateの初期化
-    if 'ruri' not in st.session_state:
-        st.session_state.ruri = RuriCharacter()
     
     ruri = st.session_state.ruri
     

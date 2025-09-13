@@ -1,0 +1,19 @@
+[server]
+port = 8501
+address = "localhost"
+enableCORS = false
+enableXsrfProtection = false
+
+[browser]
+gatherUsageStats = false
+serverAddress = "localhost"
+serverPort = 8501
+
+[runner]
+magicEnabled = true
+
+[client]
+showErrorDetails = true
+
+[global]
+developmentMode = false
