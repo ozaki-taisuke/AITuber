@@ -1,0 +1,13 @@
+# Railway deployment configuration
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "streamlit run webui/app.py --server.port=$PORT --server.address=0.0.0.0"
+
+[environments.production.variables]
+ENVIRONMENT = "production"
+DEBUG = "False"
+ENABLE_AI_FEATURES = "True"
+ENABLE_OBS_INTEGRATION = "False"
+ENABLE_STREAMING_FEATURES = "False"
