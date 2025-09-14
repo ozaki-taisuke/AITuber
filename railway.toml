@@ -3,7 +3,7 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "streamlit run webui/app.py --server.port=$PORT --server.address=0.0.0.0"
+startCommand = "streamlit run app.py --server.port=$PORT --server.address=0.0.0.0"
 
 [environments.production.variables]
 ENVIRONMENT = "production"
