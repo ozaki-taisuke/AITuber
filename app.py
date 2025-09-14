@@ -395,19 +395,21 @@ def show_home_page(user_level: UserLevel, features: Dict[str, bool], ui_config: 
     elif user_level == UserLevel.OWNER:
         st.markdown('<span class="status-indicator status-active">✅ フル機能モードで動作中</span>', unsafe_allow_html=True)
     
-    # チャット履歴の表示（全ユーザー対応）
+    # チャット履歴の表示（全ユーザー対応・新しいものが上）
     if st.session_state.chat_history:
         st.markdown("#### 📝 会話履歴")
         
-        # 履歴表示数を固定（5件）- レスポンシブはCSSで制御
+        # 履歴表示数を固定（5件）- 新しいものから表示
         display_count = 5
+        recent_history = st.session_state.chat_history[-display_count:]
         
-        for i, (timestamp, user_msg, ruri_msg) in enumerate(st.session_state.chat_history[-display_count:]):
+        # 新しいものが上に来るように逆順で表示
+        for i, (timestamp, user_msg, ruri_msg) in enumerate(reversed(recent_history)):
             st.markdown(f"""
             <div class="chat-message">
                 <small style="color: var(--text-secondary); font-weight: 500;">{timestamp}</small><br>
-                <strong style="color: var(--text-primary);">あなた:</strong> {user_msg}<br>
-                <strong class="highlight-text">ルリ:</strong> {ruri_msg}
+                <strong class="highlight-text">ルリ:</strong> {ruri_msg}<br>
+                <strong style="color: var(--text-primary);">あなた:</strong> {user_msg}
             </div>
             """, unsafe_allow_html=True)
     
@@ -505,8 +507,14 @@ def handle_chat_message(message: str, user_level: UserLevel, features: Dict[str,
     if len(st.session_state.chat_history) > max_history:
         st.session_state.chat_history = st.session_state.chat_history[-max_history:]
     
-    # 成功メッセージ
-    st.success(f"ルリ: {ai_response}")
+    # 最新の会話として統一表示（一時的にハイライト）
+    st.markdown(f"""
+    <div class="chat-message" style="border-left: 3px solid #00ff9f; background: rgba(0, 255, 159, 0.1);">
+        <small style="color: var(--text-secondary); font-weight: 500;">{timestamp} ✨ 最新</small><br>
+        <strong class="highlight-text">ルリ:</strong> {ai_response}<br>
+        <strong style="color: var(--text-primary);">あなた:</strong> {message}
+    </div>
+    """, unsafe_allow_html=True)
     
     # 永続化のためのローカルストレージ保存（オプション）
     save_chat_history_to_session()
