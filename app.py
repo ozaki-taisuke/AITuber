@@ -1267,7 +1267,7 @@ def show_auth_page():
 
 if __name__ == "__main__":
     st.set_page_config(
-        page_title="AITuber ルリ - 統一環境",
+        page_title="pupa AI System: ルリ - 感情学習AI (alpha version)",
         page_icon="🌟",
         layout="wide",
         initial_sidebar_state="expanded"
