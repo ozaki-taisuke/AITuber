@@ -10,6 +10,8 @@ address = "0.0.0.0"
 headless = true
 enableCORS = false
 enableXsrfProtection = false
+# 自動リロードを無効化 - 定期的な再描画を防ぐ
+fileWatcherType = "none"
 
 [browser]
 gatherUsageStats = false

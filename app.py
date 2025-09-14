@@ -235,6 +235,11 @@ else:
 def main():
     """統一WebUIメイン関数"""
     
+    # ナビゲーション用ユニークID生成（最優先で初期化）
+    if 'nav_session_id' not in st.session_state:
+        import time
+        st.session_state.nav_session_id = str(int(time.time() * 1000000))
+    
     try:
         # 設定モジュールの再初期化（リロード対応）
         initialize_config_modules()
@@ -274,6 +279,19 @@ def main():
                 st.session_state.authenticated = False
             if 'user_level' not in st.session_state:
                 st.session_state.user_level = UserLevel.PUBLIC if hasattr(UserLevel, 'PUBLIC') else "public"
+            
+            # チャット履歴の安定した初期化
+            if 'chat_history' not in st.session_state:
+                st.session_state.chat_history = []
+                if not CLOUD_MODE:
+                    print("💬 チャット履歴を初期化しました")
+            
+            # セッションからチャット履歴を復元（オプション）
+            try:
+                load_chat_history_from_session()
+            except Exception as e:
+                if not CLOUD_MODE:
+                    print(f"⚠️ チャット履歴復元エラー: {e}")
             
             # 初期化完了フラグを設定
             st.session_state.initialization_complete = True
@@ -330,26 +348,6 @@ def main():
             print(f"📄 ページ表示: {current_page}")
             st.session_state.last_logged_page = current_page
         
-        # メインページの表示
-        page = st.session_state.get('current_page', 'home')
-        
-        if page == 'home':
-            show_home_page(user_level, features, ui_config)
-        elif page == 'character' and features.get('character_status'):
-            show_character_page(user_level, features)
-        elif page == 'ai_conversation' and features.get('ai_conversation'):
-            show_ai_conversation_page(user_level, features)
-        elif page == 'image_analysis' and features.get('image_analysis'):
-            show_image_analysis_page(user_level, features)
-        elif page == 'streaming' and features.get('streaming_integration'):
-            show_streaming_page(user_level, features)
-        elif page == 'settings' and features.get('system_settings'):
-            show_settings_page(user_level, features)
-        elif page == 'analytics' and features.get('analytics'):
-            show_analytics_page(user_level, features)
-        else:
-            st.error(f"ページ '{page}' は利用できません")
-            
         # 完了ログ（一度だけ表示）
         if not CLOUD_MODE and not st.session_state.get('app_complete_logged', False):
             print("✅ アプリケーション表示完了")
@@ -414,9 +412,8 @@ def main():
             st.session_state.ui_config = ui_config  
             st.session_state.features = features
         
-        # 認証済みの場合は初期化後にリフレッシュしない
-        if not st.session_state.get('authenticated', False):
-            st.rerun()
+        # 初期化完了後は無限ループを防ぐためrerunしない
+        # （認証関連でのrerunは別途適切な場所で実行）
     
     # セッションから設定を取得（フォールバック）
     user_level = st.session_state.get('user_level', UserLevel.PUBLIC if UserLevel else "public")
@@ -548,7 +545,8 @@ def setup_responsive_design():
         max-width: 85%;
         margin-left: 0;
         margin-right: auto;
-        animation: pulse 1.5s infinite;
+        /* 無限アニメーションを無効化 - 定期リロード防止 */
+        /* animation: pulse 1.5s infinite; */
     }
     
     .typing-dots {
@@ -557,13 +555,15 @@ def setup_responsive_design():
     }
     
     .typing-dots span {
-        opacity: 0;
-        animation: typingDots 1.4s infinite;
+        opacity: 1; /* 固定表示に変更 */
+        /* 無限アニメーションを無効化 - 定期リロード防止 */
+        /* animation: typingDots 1.4s infinite; */
     }
     
-    .typing-dots span:nth-child(1) { animation-delay: 0s; }
-    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    /* アニメーション遅延も無効化 */
+    .typing-dots span:nth-child(1) { /* animation-delay: 0s; */ }
+    .typing-dots span:nth-child(2) { /* animation-delay: 0.2s; */ }
+    .typing-dots span:nth-child(3) { /* animation-delay: 0.4s; */ }
     
     /* アニメーション定義 */
     @keyframes slideInRight {
@@ -784,7 +784,12 @@ def setup_responsive_sidebar(user_level: Any, features: Dict[str, bool], ui_conf
         else:
             st.info("🔒 パブリックモード")
         
-        # ナビゲーションメニュー
+        # ナビゲーションメニュー（キー重複防止）
+        import time
+        import random
+        # 毎回新しいユニークIDを生成（セッション状態依存を排除）
+        unique_id = f"{int(time.time() * 1000000)}_{random.randint(10000, 99999)}"
+        
         menu_items = [
             ("home", "🏠 ホーム", True),
             ("character", "👤 キャラクター状態", features.get('character_status', False)),
@@ -797,11 +802,12 @@ def setup_responsive_sidebar(user_level: Any, features: Dict[str, bool], ui_conf
         
         for page_key, page_name, enabled in menu_items:
             if enabled:
-                if st.button(page_name, key=f"nav_{page_key}", width="stretch"):
+                if st.button(page_name, key=f"nav_{page_key}_{unique_id}", width="stretch"):
                     st.session_state.current_page = page_key
                     # st.rerun() を削除 - 自然な状態更新に変更
             else:
                 st.button(page_name + " 🔒", disabled=True, width="stretch",
+                         key=f"nav_{page_key}_disabled_{unique_id}",
                          help="所有者認証が必要です")
         
         # 認証関連（改良版・ホットリロード対応）
@@ -810,12 +816,12 @@ def setup_responsive_sidebar(user_level: Any, features: Dict[str, bool], ui_conf
         is_public = (hasattr(UserLevel, 'PUBLIC') and user_level == UserLevel.PUBLIC) or user_level == "public"
         
         if (is_public and not is_authenticated):
-            if st.button("🔐 所有者認証", width="stretch"):
+            if st.button("🔐 所有者認証", key=f"auth_login_{unique_id}", width="stretch"):
                 st.session_state.show_auth = True
                 # 認証画面表示のみrerunが必要
                 st.rerun()
         else:
-            if st.button("🚪 ログアウト", width="stretch"):
+            if st.button("🚪 ログアウト", key=f"auth_logout_{unique_id}", width="stretch"):
                 try:
                     UnifiedAuth().logout(st.session_state)
                 except:
@@ -829,6 +835,10 @@ def setup_responsive_sidebar(user_level: Any, features: Dict[str, bool], ui_conf
 
 def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
     """ホームページ - レスポンシブ対応チャット機能付き"""
+    
+    # チャット履歴の安定した初期化（確実に実行）
+    if 'chat_history' not in st.session_state:
+        st.session_state.chat_history = []
     
     # メイン画像とタイトル
     st.markdown("""
@@ -905,20 +915,19 @@ def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
     
     # チャット処理（全ユーザー対応）
     if submit_button and chat_input.strip():
-        handle_chat_message(chat_input.strip(), user_level, features)
-    
+        handle_chat_message_stable(chat_input.strip(), user_level, features)
+
     if clear_history:
         st.session_state.chat_history = []
         st.success("会話履歴を削除しました")
-        # st.rerun() を削除 - 画面点滅を防ぐ
-    
+
     if export_chat and st.session_state.chat_history:
         export_chat_history()
-    
+
     # 区切り線
     st.markdown("---")
-    
-    # チャット履歴の表示（入力エリアの下に配置・古いものが上、新しいものが下）
+
+    # チャット履歴の安定表示（静的・ちらつき防止）
     if st.session_state.chat_history:
         st.markdown("#### 📝 会話履歴")
         
@@ -946,7 +955,7 @@ def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
                 <div class="message-content">{ruri_msg}</div>
             </div>
             """, unsafe_allow_html=True)
-    
+
     # 最小限のフッター（権利表示のみ）
     st.markdown("---")
     st.markdown(
@@ -957,7 +966,92 @@ def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
         unsafe_allow_html=True
     )
 
-def handle_chat_message(message: str, user_level: Any, features: Dict[str, bool]):
+def handle_chat_message_stable(message: str, user_level: Any, features: Dict[str, bool]):
+    """安定したチャットメッセージ処理（st.rerun()なし）"""
+    import datetime
+    import time
+    
+    timestamp = datetime.datetime.now().strftime("%H:%M")
+    
+    # チャット履歴の自動保存設定
+    max_history = 50  # 最大保存履歴数
+    
+    # AI応答の生成
+    if lazy_import_ai() and features.get("ai_conversation"):
+        try:
+            # AI応答の生成（遅延インポート）
+            ruri = get_ruri_character()
+            ai_response = ruri.generate_response(message)
+        except Exception as e:
+            ai_response = f"⚠️ AI応答エラー: {str(e)}"
+    else:
+        # AI機能が無効な場合のフォールバック
+        fallback_responses = [
+            "ありがとうございます！感情を学習中です...",
+            "そうですね...色々な感情があるんですね",
+            "まだ学習中ですが、あなたの言葉は覚えています",
+            "もっとお話ししたいです！",
+            "感情って...難しいですね"
+        ]
+        import random
+        ai_response = random.choice(fallback_responses)
+    
+    # 履歴に追加（自動的に古い履歴を削除）
+    st.session_state.chat_history.append((timestamp, message, ai_response))
+    
+    # 履歴のサイズ制限
+    if len(st.session_state.chat_history) > max_history:
+        st.session_state.chat_history = st.session_state.chat_history[-max_history:]
+    
+    # 永続化のためのローカルストレージ保存（オプション）
+    save_chat_history_to_session()
+    
+    # st.rerunは使わず、次回の自然な再描画で表示される
+
+def handle_chat_message_dynamic(message: str, user_level: Any, features: Dict[str, bool]):
+    """動的チャットメッセージ処理（画面更新なし）"""
+    import datetime
+    import time
+    
+    timestamp = datetime.datetime.now().strftime("%H:%M")
+    
+    # チャット履歴の自動保存設定
+    max_history = 50  # 最大保存履歴数
+    
+    # AI応答の生成
+    if lazy_import_ai() and features.get("ai_conversation"):
+        try:
+            # 一時的な「考え中」表示（プレースホルダー内）
+            with st.session_state.chat_placeholder.container():
+                with st.spinner('ルリが考え中...'):
+                    # AI応答の生成（遅延インポート）
+                    ruri = get_ruri_character()
+                    ai_response = ruri.generate_response(message)
+        except Exception as e:
+            ai_response = f"⚠️ AI応答エラー: {str(e)}"
+    else:
+        # AI機能が無効な場合のフォールバック
+        fallback_responses = [
+            "ありがとうございます！感情を学習中です...",
+            "そうですね...色々な感情があるんですね",
+            "まだ学習中ですが、あなたの言葉は覚えています",
+            "もっとお話ししたいです！",
+            "感情って...難しいですね"
+        ]
+        import random
+        ai_response = random.choice(fallback_responses)
+    
+    # 履歴に追加（自動的に古い履歴を削除）
+    st.session_state.chat_history.append((timestamp, message, ai_response))
+    
+    # 履歴のサイズ制限
+    if len(st.session_state.chat_history) > max_history:
+        st.session_state.chat_history = st.session_state.chat_history[-max_history:]
+    
+    # 永続化のためのローカルストレージ保存（オプション）
+    save_chat_history_to_session()
+
+def handle_chat_message_legacy(message: str, user_level: Any, features: Dict[str, bool]):
     """チャットメッセージの処理（履歴更新型）"""
     import datetime
     import time
@@ -999,27 +1093,8 @@ def handle_chat_message(message: str, user_level: Any, features: Dict[str, bool]
     # 永続化のためのローカルストレージ保存（オプション）
     save_chat_history_to_session()
     
-    # 新しいメッセージを表示（最新の会話のみ特別表示）
-    latest_timestamp, latest_user_msg, latest_ruri_msg = st.session_state.chat_history[-1]
-    
-    st.markdown("#### 💬 最新の会話")
-    
-    # 最新のユーザーメッセージ
-    st.markdown(f'<div class="message-timestamp">{latest_timestamp}</div>', unsafe_allow_html=True)
-    st.markdown(f"""
-    <div class="user-message">
-        <div class="message-label">あなた</div>
-        <div class="message-content">{latest_user_msg}</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # 最新のルリメッセージ（強調表示）
-    st.markdown(f"""
-    <div class="ruri-message" style="border-left: 6px solid #8e24aa; background: linear-gradient(135deg, #f8f0ff 0%, #f0e7ff 100%);">
-        <div class="message-label">ルリ ✨</div>
-        <div class="message-content">{latest_ruri_msg}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    # メッセージ追加後は通常の履歴表示に任せる
+    # （二重表示を防ぐため、最新会話の個別表示は削除）
 def save_chat_history_to_session():
     """チャット履歴をセッションに永続化"""
     try:
@@ -1238,4 +1313,9 @@ if __name__ == "__main__":
         layout="wide",
         initial_sidebar_state="expanded"
     )
+    
+    # Streamlit自動再実行の最適化
+    if 'app_initialized_stable' not in st.session_state:
+        st.session_state.app_initialized_stable = True
+    
     main()
