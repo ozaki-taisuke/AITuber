@@ -14,8 +14,10 @@
 #### 基本設定
 - **Project name**: `ruri-aituber`
 - **Production branch**: `main`
-- **Build command**: `pip install -r requirements.txt && chmod +x start.sh`
+- **Framework preset**: None (Custom)
+- **Build command**: `pip install -r requirements.txt`
 - **Build output directory**: `.`
+- **Root directory**: (空白のまま)
 
 #### 環境変数設定
 ```bash
