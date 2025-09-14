@@ -1,0 +1,40 @@
+{
+  "gpt-oss": {
+    "enabled": true,
+    "priority": 1,
+    "config": {
+      "model": "gpt-oss:20b"
+    }
+  },
+  "ollama": {
+    "enabled": true,
+    "priority": 2,
+    "config": {
+      "model": "llama2",
+      "host": "localhost",
+      "port": 11434
+    }
+  },
+  "openai": {
+    "enabled": false,
+    "priority": 3,
+    "config": {
+      "model": "gpt-3.5-turbo",
+      "api_key": ""
+    }
+  },
+  "huggingface": {
+    "enabled": false,
+    "priority": 4,
+    "config": {
+      "model": "microsoft/DialoGPT-medium"
+    }
+  },
+  "simple": {
+    "enabled": true,
+    "priority": 1,
+    "config": {
+      "test_param": "test_value"
+    }
+  }
+}

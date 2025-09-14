@@ -27,7 +27,7 @@ class OpenAIProvider(BaseAIProvider):
     def __init__(self, config: Dict[str, Any] = None):
         super().__init__(config)
         self.client = None
-        self.model = "gpt-3.5-turbo"
+        self.model = "gpt-4o-mini"
         
     def is_available(self) -> bool:
         """OpenAI利用可能性チェック"""
@@ -55,7 +55,7 @@ class OpenAIProvider(BaseAIProvider):
                 organization=config.get('organization') if config else None,
                 project=config.get('project') if config else None
             )
-            self.model = config.get('model', 'gpt-3.5-turbo') if config else 'gpt-3.5-turbo'
+            self.model = config.get('model', 'gpt-4o-mini') if config else 'gpt-4o-mini'
             
             # 接続テスト
             try:
