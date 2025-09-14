@@ -194,17 +194,21 @@ try:
     import cv2
     import numpy as np
     IMAGE_PROCESSING_AVAILABLE = True
-    print("✅ 画像処理機能: 利用可能")
+    if not CLOUD_MODE:
+        print("✅ 画像処理機能: 利用可能")
 except ImportError as e:
-    print(f"⚠️ 画像処理機能の読み込みに失敗: {e}")
+    if not CLOUD_MODE:
+        print(f"⚠️ 画像処理機能の読み込みに失敗: {e}")
     IMAGE_PROCESSING_AVAILABLE = False
 
 try:
     import plotly.graph_objects as go
     PLOTTING_AVAILABLE = True
-    print("✅ Plotly機能: 利用可能")
+    if not CLOUD_MODE:
+        print("✅ Plotly機能: 利用可能")
 except ImportError:
-    print("⚠️ Plotly機能は無効です")
+    if not CLOUD_MODE:
+        print("⚠️ Plotly機能は無効です")
     PLOTTING_AVAILABLE = False
 
 def main():
@@ -223,14 +227,17 @@ def main():
             if 'user_level' not in st.session_state:
                 st.session_state.user_level = UserLevel.PUBLIC if hasattr(UserLevel, 'PUBLIC') else "public"
         
-        print("🚀 アプリケーション初期化開始...")
+        if not CLOUD_MODE:
+            print("🚀 アプリケーション初期化開始...")
         
         # レスポンシブデザインのセットアップ（安全実行）
         try:
             setup_responsive_design()
-            print("✅ レスポンシブデザイン: 設定完了")
+            if not CLOUD_MODE:
+                print("✅ レスポンシブデザイン: 設定完了")
         except Exception as e:
-            print(f"⚠️ レスポンシブデザイン設定エラー: {e}")
+            if not CLOUD_MODE:
+                print(f"⚠️ レスポンシブデザイン設定エラー: {e}")
             # デザインエラーでもアプリ続行
         
         # セッション状態の初期化（ホットリロード対応強化）
@@ -246,7 +253,8 @@ def main():
             # 初期化完了フラグを設定
             st.session_state.initialization_complete = True
         
-        print("🎯 設定取得中...")
+        if not CLOUD_MODE:
+            print("🎯 設定取得中...")
         
         # 設定の取得（エラーハンドリング強化）
         try:
@@ -254,14 +262,16 @@ def main():
             ui_config = UnifiedConfig.get_ui_config(user_level) if UnifiedConfig else {"title": "AITuber ルリ", "theme": "default"}
             features = UnifiedConfig.get_available_features(user_level) if UnifiedConfig else {"ai_conversation": True, "character_status": True}
         except Exception as e:
-            print(f"⚠️ 設定取得エラー: {e}")
+            if not CLOUD_MODE:
+                print(f"⚠️ 設定取得エラー: {e}")
             # フォールバック設定
             user_level = "public"
             ui_config = {"title": "AITuber ルリ", "theme": "default"}
             features = {"ai_conversation": True, "character_status": True}
         
-        print(f"👤 ユーザーレベル: {user_level}")
-        print(f"🔧 利用可能機能: {list(features.keys())}")
+        if not CLOUD_MODE:
+            print(f"👤 ユーザーレベル: {user_level}")
+            print(f"🔧 利用可能機能: {list(features.keys())}")
         
         # レスポンシブサイドバーの設定
         setup_responsive_sidebar(user_level, features, ui_config)
@@ -286,7 +296,8 @@ def main():
                 show_auth_page()
                 return
         
-        print(f"📄 ページ表示: {current_page}")
+        if not CLOUD_MODE:
+            print(f"📄 ページ表示: {current_page}")
         
         # メインページの表示
         page = st.session_state.get('current_page', 'home')
@@ -308,10 +319,12 @@ def main():
         else:
             st.error(f"ページ '{page}' は利用できません")
             
-        print("✅ アプリケーション表示完了")
+        if not CLOUD_MODE:
+            print("✅ アプリケーション表示完了")
         
     except Exception as e:
-        print(f"💥 致命的エラー: {e}")
+        if not CLOUD_MODE:
+            print(f"💥 致命的エラー: {e}")
         st.error(f"アプリケーションの初期化に失敗しました: {e}")
         st.markdown("### 🚨 緊急フォールバックモード")
         st.markdown("基本的な機能のみ利用可能です")
@@ -753,7 +766,7 @@ def setup_responsive_sidebar(user_level: Any, features: Dict[str, bool], ui_conf
             if enabled:
                 if st.button(page_name, key=f"nav_{page_key}", width="stretch"):
                     st.session_state.current_page = page_key
-                    st.rerun()
+                    # st.rerun() を削除 - 自然な状態更新に変更
             else:
                 st.button(page_name + " 🔒", disabled=True, width="stretch",
                          help="所有者認証が必要です")
@@ -766,6 +779,7 @@ def setup_responsive_sidebar(user_level: Any, features: Dict[str, bool], ui_conf
         if (is_public and not is_authenticated):
             if st.button("🔐 所有者認証", width="stretch"):
                 st.session_state.show_auth = True
+                # 認証画面表示のみrerunが必要
                 st.rerun()
         else:
             if st.button("🚪 ログアウト", width="stretch"):
@@ -777,6 +791,7 @@ def setup_responsive_sidebar(user_level: Any, features: Dict[str, bool], ui_conf
                     st.session_state.authenticated = False
                     # 初期化フラグもリセット
                     st.session_state.initialization_complete = False
+                # ログアウト時のみrerunが必要
                 st.rerun()
 
 def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
@@ -891,7 +906,7 @@ def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
     if clear_history:
         st.session_state.chat_history = []
         st.success("会話履歴を削除しました")
-        st.rerun()
+        # st.rerun() を削除 - 画面点滅を防ぐ
     
     if export_chat and st.session_state.chat_history:
         export_chat_history()
