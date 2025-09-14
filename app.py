@@ -41,14 +41,14 @@ for path in [project_root, src_path]:
 
 # Streamlit自動リロード対応: キャッシュクリア（CLOUD_MODEでは軽量化）
 if not CLOUD_MODE:
-    if 'unified_config' in sys.modules:
-        del sys.modules['unified_config']
-    if 'unified_auth' in sys.modules:
-        del sys.modules['unified_auth']
-    if 'src.unified_config' in sys.modules:
-        del sys.modules['src.unified_config']
-    if 'src.unified_auth' in sys.modules:
-        del sys.modules['src.unified_auth']
+    # 設定関連モジュールの強制リロード
+    modules_to_clear = [
+        'unified_config', 'unified_auth', 'api_config',
+        'src.unified_config', 'src.unified_auth', 'src.api_config'
+    ]
+    for module in modules_to_clear:
+        if module in sys.modules:
+            del sys.modules[module]
 
 # 統一設定とセキュリティ（エラーハンドリング付き・リロード対応）
 CONFIG_AVAILABLE = False
@@ -108,14 +108,14 @@ def initialize_config_modules():
             def get_available_features(user_level):
                 if user_level == FallbackUserLevel.OWNER:
                     return {
-                        "character_status": True, 
+                        "character_status": False,  # 未実装のため無効化
                         "ai_conversation": True,
-                        "image_analysis": True,
-                        "streaming_integration": True,
-                        "system_settings": True,
-                        "analytics": True
+                        "image_analysis": False,    # 未実装のため無効化
+                        "streaming_integration": False,  # 未実装のため無効化
+                        "system_settings": False,  # 未実装のため無効化
+                        "analytics": False         # 未実装のため無効化
                     }
-                return {"ai_conversation": True, "character_status": True}
+                return {"ai_conversation": True, "character_status": False}
         
         class FallbackUnifiedAuth:
             @staticmethod
@@ -310,14 +310,14 @@ def main():
         try:
             user_level = UnifiedConfig.get_user_level(st.session_state) if UnifiedConfig else "public"
             ui_config = UnifiedConfig.get_ui_config(user_level) if UnifiedConfig else {"title": "AITuber ルリ", "theme": "default"}
-            features = UnifiedConfig.get_available_features(user_level) if UnifiedConfig else {"ai_conversation": True, "character_status": True}
+            features = UnifiedConfig.get_available_features(user_level) if UnifiedConfig else {"ai_conversation": True, "character_status": False}
         except Exception as e:
             if not CLOUD_MODE:
                 print(f"⚠️ 設定取得エラー: {e}")
             # フォールバック設定
             user_level = "public"
             ui_config = {"title": "AITuber ルリ", "theme": "default"}
-            features = {"ai_conversation": True, "character_status": True}
+            features = {"ai_conversation": True, "character_status": False}
         
         # ユーザー情報ログ（一度だけ表示）
         if not CLOUD_MODE and not st.session_state.get('user_info_logged', False):
@@ -325,8 +325,8 @@ def main():
             print(f"🔧 利用可能機能: {list(features.keys())}")
             st.session_state.user_info_logged = True
         
-        # レスポンシブサイドバーの設定
-        setup_responsive_sidebar(user_level, features, ui_config)
+        # レスポンシブサイドバーの設定（一度だけ実行）
+        # setup_responsive_sidebar(user_level, features, ui_config)  # 重複削除
         
         # 認証画面の表示判定
         current_page = st.session_state.get('current_page', 'home')
@@ -401,15 +401,15 @@ def main():
                 # 認証状態に応じてフィーチャーを設定
                 if st.session_state.get('authenticated', False) or user_level in ["owner", getattr(UserLevel, 'OWNER', None)]:
                     features = {
-                        "character_status": True, 
+                        "character_status": False,  # 未実装のため無効化
                         "ai_conversation": True,
-                        "image_analysis": True,
-                        "streaming_integration": True,
-                        "system_settings": True,
-                        "analytics": True
+                        "image_analysis": False,    # 未実装のため無効化
+                        "streaming_integration": False,  # 未実装のため無効化
+                        "system_settings": False,  # 未実装のため無効化
+                        "analytics": False         # 未実装のため無効化
                     }
                 else:
-                    features = {"ai_conversation": True, "character_status": True}
+                    features = {"ai_conversation": True, "character_status": False}
             
             # 初期化完了フラグを設定（認証状態を保持）
             st.session_state.initialization_complete = True
@@ -423,7 +423,7 @@ def main():
     # セッションから設定を取得（フォールバック）
     user_level = st.session_state.get('user_level', UserLevel.PUBLIC if UserLevel else "public")
     ui_config = st.session_state.get('ui_config', {"title": "AITuber ルリ", "theme": "default"})
-    features = st.session_state.get('features', {"ai_conversation": True, "character_status": True})
+    features = st.session_state.get('features', {"ai_conversation": True, "character_status": False})
     
     # レスポンシブ対応の初期設定
     setup_responsive_design()
@@ -798,8 +798,8 @@ def setup_responsive_sidebar(user_level: Any, features: Dict[str, bool], ui_conf
         menu_items = [
             ("home", "🏠 ホーム", True),
             ("character", "👤 キャラクター状態", features.get('character_status', False)),
-            ("ai_conversation", "💬 AI会話", features.get('ai_conversation', False)),
-            ("image_analysis", "🖼️ 画像分析", features.get('image_analysis', False)),
+            ("ai_conversation", "💬 ルリと話す", features.get('ai_conversation', True)),
+            ("image_analysis", "🖼️ 画像分析", features.get('basic_image_analysis', False)),
             ("streaming", "📺 配信管理", features.get('streaming_integration', False)),
             ("settings", "⚙️ 設定", features.get('system_settings', False)),
             ("analytics", "📊 分析", features.get('analytics', False))
@@ -808,8 +808,12 @@ def setup_responsive_sidebar(user_level: Any, features: Dict[str, bool], ui_conf
         for page_key, page_name, enabled in menu_items:
             if enabled:
                 if st.button(page_name, key=f"nav_{page_key}_{unique_id}", width="stretch"):
-                    st.session_state.current_page = page_key
-                    # st.rerun() を削除 - 自然な状態更新に変更
+                    current_page = st.session_state.get('current_page', 'home')
+                    if current_page != page_key:  # 異なるページの場合のみ遷移
+                        st.session_state.current_page = page_key
+                        # 会話処理中でない場合のみrerunを実行
+                        if not st.session_state.get('chat_processing', False):
+                            st.rerun()
             else:
                 st.button(page_name + " 🔒", disabled=True, width="stretch",
                          key=f"nav_{page_key}_disabled_{unique_id}",
@@ -862,7 +866,7 @@ def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
     else:
         st.info("🎭 ルリの画像を読み込み中...")
     
-    # 会話エリア（モジュール化版）
+    # 会話エリア（シンプル版）
     st.markdown("### 💬 ルリと話す")
     
     # APIキー確認と状態表示

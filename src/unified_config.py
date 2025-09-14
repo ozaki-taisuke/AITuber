@@ -79,24 +79,24 @@ class UnifiedConfig:
             "character_display": True,
             "basic_ui": True,
             "image_upload": True,
-            "ai_conversation": True,     # パブリックでもAI会話可能
-            "character_status": True,    # キャラクター状態表示
+            "ai_conversation": False,    # 一時的に無効化
+            "character_status": False,   # 未実装のため無効化
             
             # 限定開放機能（パブリックでも利用可能）
             "ai_chat": True,            # AIチャット機能を全ユーザーに開放
             "emotion_learning": True,   # 感情学習の表示
-            "basic_image_analysis": True, # 基本的な画像分析
+            "basic_image_analysis": False, # 未実装のため無効化
             
-            # 所有者専用機能
-            "advanced_image_analysis": is_owner,
-            "obs_integration": is_owner,
-            "streaming_integration": is_owner,  # 修正：streaming_features → streaming_integration
-            "api_access": is_owner,
-            "debug_info": is_owner,
-            "user_management": is_owner,
-            "system_settings": is_owner,
-            "analytics": is_owner,
-            "log_viewer": is_owner,
+            # 所有者専用機能（未実装のため全て無効化）
+            "advanced_image_analysis": False,
+            "obs_integration": False,
+            "streaming_integration": False,
+            "api_access": False,
+            "debug_info": False,
+            "user_management": False,
+            "system_settings": False,
+            "analytics": False,
+            "log_viewer": False,
         }
         return features
     

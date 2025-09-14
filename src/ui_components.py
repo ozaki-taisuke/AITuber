@@ -218,64 +218,72 @@ class ChatUI:
 
     def _handle_message_with_live_feedback(self, message: str, user_level: Any, features: Dict[str, bool]):
         """ライブフィードバック付きメッセージ処理（消失防止版）"""
-        # 1. タイムスタンプを統一
-        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        # 会話処理中フラグを設定（ナビゲーション保護）
+        st.session_state.chat_processing = True
         
-        # 2. 専用コンテナを作成（履歴とは別管理）
-        live_container = st.container()
-        
-        with live_container:
-            # ルリの吹き出し（上部）
-            ruri_placeholder = st.empty()
+        try:
+            # 1. タイムスタンプを統一
+            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+            
+            # 2. 専用コンテナを作成（履歴とは別管理）
+            live_container = st.container()
+            
+            with live_container:
+                # ルリの吹き出し（上部）
+                ruri_placeholder = st.empty()
+                ruri_placeholder.markdown(f"""
+                <div class="ruri-message">
+                    <span class="message-label">🎭 ルリ</span>
+                    <div class="message-timestamp">{timestamp}</div>
+                    <div class="message-content">💭 考え中...</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # ユーザーメッセージ（下部）
+                st.markdown(f"""
+                <div class="user-message">
+                    <span class="message-label">👤 あなた</span>
+                    <div class="message-timestamp">{timestamp}</div>
+                    <div class="message-content">{message}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # 3. AI応答生成
+            with st.spinner('🤖 ルリが返答を考えています...'):
+                ai_generator = get_ai_generator()
+                ai_response, response_time, model_info = ai_generator.generate_response(
+                    message, user_level, features
+                )
+            
+            # 4. シンプルなタイピング表示
+            ruri_placeholder.markdown(f"""
+            <div class="ruri-message">
+                <span class="message-label">🎭 ルリ ✍️</span>
+                <div class="message-timestamp">{timestamp}</div>
+                <div class="message-content">{ai_response[:20]}...</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # 短い待機
+            time.sleep(0.8)
+            
+            # 5. 最終表示
             ruri_placeholder.markdown(f"""
             <div class="ruri-message">
                 <span class="message-label">🎭 ルリ</span>
                 <div class="message-timestamp">{timestamp}</div>
-                <div class="message-content">💭 考え中...</div>
+                <div class="message-content">{ai_response}</div>
             </div>
             """, unsafe_allow_html=True)
             
-            # ユーザーメッセージ（下部）
-            st.markdown(f"""
-            <div class="user-message">
-                <span class="message-label">👤 あなた</span>
-                <div class="message-timestamp">{timestamp}</div>
-                <div class="message-content">{message}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            # 6. 履歴保存（将来の拡張ポイント）
+            # TODO: LocalStorage / リモートサーバー対応
+            # chat_manager = get_chat_manager()
+            # chat_manager.add_message(message, ai_response, response_time, model_info)
         
-        # 3. AI応答生成
-        with st.spinner('🤖 ルリが返答を考えています...'):
-            ai_generator = get_ai_generator()
-            ai_response, response_time, model_info = ai_generator.generate_response(
-                message, user_level, features
-            )
-        
-        # 4. シンプルなタイピング表示
-        ruri_placeholder.markdown(f"""
-        <div class="ruri-message">
-            <span class="message-label">🎭 ルリ ✍️</span>
-            <div class="message-timestamp">{timestamp}</div>
-            <div class="message-content">{ai_response[:20]}...</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # 短い待機
-        time.sleep(0.8)
-        
-        # 5. 最終表示
-        ruri_placeholder.markdown(f"""
-        <div class="ruri-message">
-            <span class="message-label">🎭 ルリ</span>
-            <div class="message-timestamp">{timestamp}</div>
-            <div class="message-content">{ai_response}</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # 6. 履歴保存（将来の拡張ポイント）
-        # TODO: LocalStorage / リモートサーバー対応
-        # chat_manager = get_chat_manager()
-        # chat_manager.add_message(message, ai_response, response_time, model_info)
+        finally:
+            # 会話処理完了フラグをリセット
+            st.session_state.chat_processing = False
     
     def render_chat_controls(self):
         """チャット管理用コントロールを表示"""
