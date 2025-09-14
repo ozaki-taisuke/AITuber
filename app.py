@@ -840,36 +840,7 @@ def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
     elif user_level == UserLevel.OWNER:
         st.markdown('<span class="status-indicator status-active">✅ フル機能モードで動作中</span>', unsafe_allow_html=True)
     
-    # チャット履歴の表示（個別ボックス・新しいものが上）
-    if st.session_state.chat_history:
-        st.markdown("#### 📝 会話履歴")
-        
-        # 履歴表示数を固定（5件）- 新しいものから表示
-        display_count = 5
-        recent_history = st.session_state.chat_history[-display_count:]
-        
-        # 新しいものが上に来るように逆順で表示
-        for i, (timestamp, user_msg, ruri_msg) in enumerate(reversed(recent_history)):
-            # タイムスタンプ表示
-            st.markdown(f'<div class="message-timestamp">{timestamp}</div>', unsafe_allow_html=True)
-            
-            # ユーザーメッセージボックス
-            st.markdown(f"""
-            <div class="user-message">
-                <div class="message-label">あなた</div>
-                <div class="message-content">{user_msg}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # ルリメッセージボックス
-            st.markdown(f"""
-            <div class="ruri-message">
-                <div class="message-label">ルリ</div>
-                <div class="message-content">{ruri_msg}</div>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    # チャット入力（全ユーザー対応）
+    # チャット入力（全ユーザー対応）- 上部に配置
     with st.form("chat_form", clear_on_submit=True):
         chat_input = st.text_input(
             "ルリにメッセージを送信:",
@@ -911,6 +882,38 @@ def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
     if export_chat and st.session_state.chat_history:
         export_chat_history()
     
+    # 区切り線
+    st.markdown("---")
+    
+    # チャット履歴の表示（入力エリアの下に配置・古いものが上、新しいものが下）
+    if st.session_state.chat_history:
+        st.markdown("#### 📝 会話履歴")
+        
+        # 履歴表示数を固定（5件）- 古いものから順番に表示
+        display_count = 5
+        recent_history = st.session_state.chat_history[-display_count:]
+        
+        # 古いものが上、新しいものが下になるよう通常順序で表示
+        for i, (timestamp, user_msg, ruri_msg) in enumerate(recent_history):
+            # タイムスタンプ表示
+            st.markdown(f'<div class="message-timestamp">{timestamp}</div>', unsafe_allow_html=True)
+            
+            # ユーザーメッセージボックス
+            st.markdown(f"""
+            <div class="user-message">
+                <div class="message-label">あなた</div>
+                <div class="message-content">{user_msg}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # ルリメッセージボックス
+            st.markdown(f"""
+            <div class="ruri-message">
+                <div class="message-label">ルリ</div>
+                <div class="message-content">{ruri_msg}</div>
+            </div>
+            """, unsafe_allow_html=True)
+    
     # 最小限のフッター（権利表示のみ）
     st.markdown("---")
     st.markdown(
@@ -922,7 +925,7 @@ def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
     )
 
 def handle_chat_message(message: str, user_level: Any, features: Dict[str, bool]):
-    """チャットメッセージの処理（タイピング効果付き）"""
+    """チャットメッセージの処理（履歴更新型）"""
     import datetime
     import time
     
@@ -931,34 +934,14 @@ def handle_chat_message(message: str, user_level: Any, features: Dict[str, bool]
     # チャット履歴の自動保存設定
     max_history = 50  # 最大保存履歴数
     
-    # ユーザーメッセージを即座に表示
-    st.markdown(f'<div class="message-timestamp">{timestamp}</div>', unsafe_allow_html=True)
-    st.markdown(f"""
-    <div class="user-message">
-        <div class="message-label">あなた</div>
-        <div class="message-content">{message}</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # ルリのタイピング中表示
-    typing_placeholder = st.empty()
-    typing_placeholder.markdown(f"""
-    <div class="typing-indicator">
-        <div class="message-label">ルリ</div>
-        <div class="message-content">
-            考え中<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # タイピング効果の待機時間
-    time.sleep(1.5)
-    
+    # AI応答の生成
     if lazy_import_ai() and features.get("ai_conversation"):
         try:
-            # AI応答の生成（遅延インポート）
-            ruri = get_ruri_character()
-            ai_response = ruri.generate_response(message)
+            # 一時的な「考え中」表示
+            with st.spinner('ルリが考え中...'):
+                # AI応答の生成（遅延インポート）
+                ruri = get_ruri_character()
+                ai_response = ruri.generate_response(message)
         except Exception as e:
             ai_response = f"⚠️ AI応答エラー: {str(e)}"
     else:
@@ -973,32 +956,6 @@ def handle_chat_message(message: str, user_level: Any, features: Dict[str, bool]
         import random
         ai_response = random.choice(fallback_responses)
     
-    # タイピング表示を削除してルリの応答を表示
-    typing_placeholder.empty()
-    
-    # ルリの応答をタイピング効果付きで表示
-    response_placeholder = st.empty()
-    
-    # 簡易タイピング効果（文字を段階的に表示）
-    displayed_text = ""
-    for i in range(len(ai_response)):
-        displayed_text = ai_response[:i+1]
-        response_placeholder.markdown(f"""
-        <div class="ruri-message">
-            <div class="message-label">ルリ</div>
-            <div class="message-content">{displayed_text}<span style="opacity: 0.5;">|</span></div>
-        </div>
-        """, unsafe_allow_html=True)
-        time.sleep(0.05)  # タイピング速度調整
-    
-    # 最終的なメッセージ（カーソル削除）
-    response_placeholder.markdown(f"""
-    <div class="ruri-message">
-        <div class="message-label">ルリ</div>
-        <div class="message-content">{ai_response}</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
     # 履歴に追加（自動的に古い履歴を削除）
     st.session_state.chat_history.append((timestamp, message, ai_response))
     
@@ -1008,7 +965,28 @@ def handle_chat_message(message: str, user_level: Any, features: Dict[str, bool]
     
     # 永続化のためのローカルストレージ保存（オプション）
     save_chat_history_to_session()
-
+    
+    # 新しいメッセージを表示（最新の会話のみ特別表示）
+    latest_timestamp, latest_user_msg, latest_ruri_msg = st.session_state.chat_history[-1]
+    
+    st.markdown("#### 💬 最新の会話")
+    
+    # 最新のユーザーメッセージ
+    st.markdown(f'<div class="message-timestamp">{latest_timestamp}</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="user-message">
+        <div class="message-label">あなた</div>
+        <div class="message-content">{latest_user_msg}</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # 最新のルリメッセージ（強調表示）
+    st.markdown(f"""
+    <div class="ruri-message" style="border-left: 6px solid #8e24aa; background: linear-gradient(135deg, #f8f0ff 0%, #f0e7ff 100%);">
+        <div class="message-label">ルリ ✨</div>
+        <div class="message-content">{latest_ruri_msg}</div>
+    </div>
+    """, unsafe_allow_html=True)
 def save_chat_history_to_session():
     """チャット履歴をセッションに永続化"""
     try:
@@ -1022,7 +1000,8 @@ def save_chat_history_to_session():
         st.session_state.persistent_chat_history = st.session_state.chat_history.copy()
         
     except Exception as e:
-        print(f"履歴保存エラー: {e}")
+        if not CLOUD_MODE:
+            print(f"履歴保存エラー: {e}")
 
 def load_chat_history_from_session():
     """セッションからチャット履歴を復元"""
@@ -1030,7 +1009,8 @@ def load_chat_history_from_session():
         if 'persistent_chat_history' in st.session_state:
             st.session_state.chat_history = st.session_state.persistent_chat_history.copy()
     except Exception as e:
-        print(f"履歴復元エラー: {e}")
+        if not CLOUD_MODE:
+            print(f"履歴復元エラー: {e}")
         st.session_state.chat_history = []
 
 def export_chat_history():
