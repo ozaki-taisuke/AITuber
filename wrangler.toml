@@ -1,0 +1,13 @@
+name = "ruri-aituber"
+compatibility_date = "2024-09-14"
+
+[env.production]
+name = "ruri-aituber"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+DEBUG = "false"
+BETA_AUTH_REQUIRED = "false"
+ENABLE_AI_FEATURES = "true"
+ENABLE_OBS_INTEGRATION = "false"
+ENABLE_STREAMING_FEATURES = "false"

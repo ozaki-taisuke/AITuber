@@ -1,13 +1,23 @@
 # Cloudflare Pages デプロイメント設定
 
-## 🌐 Cloudflare Pages でのデプロイ手順
+## 🔧 Cloudflare Pages での設定
 
-### 1. Cloudflare ダッシュボードでの設定
+### 重要な注意事項
+Cloudflare PagesでStreamlitアプリを直接実行することは**技術的に困難**です。
+以下の代替案を検討してください：
 
-1. **[Cloudflare Dashboard](https://dash.cloudflare.com/)** にログイン
-2. **Pages** セクションに移動
-3. **Create a project** をクリック
-4. **Connect to Git** を選択してGitHubを連携
+#### 推奨代替案
+1. **Streamlit Cloud** (推奨)
+2. **Railway** 
+3. **Render**
+4. **Heroku**
+
+### それでもCloudflare Pagesを使用する場合
+
+#### 静的サイトとしての配信
+- `index.html` でローディング画面を表示
+- 実際のStreamlitアプリは別サービスで実行
+- リダイレクトまたはiframeで連携
 
 ### 2. プロジェクト設定
 

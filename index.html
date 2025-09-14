@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AITuber ルリ - Loading...</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            text-align: center;
+            max-width: 600px;
+        }
+        .logo {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+        .loading {
+            font-size: 1.2em;
+            margin: 20px 0;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .info {
+            margin-top: 30px;
+            opacity: 0.8;
+        }
+    </style>
+    <script>
+        // Streamlitアプリケーションのリダイレクト処理
+        setTimeout(function() {
+            // Streamlitアプリケーションの起動を試行
+            fetch('/webui/app_beta.py')
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/webui/app_beta.py';
+                    } else {
+                        // フォールバック: 直接アクセス
+                        window.location.href = 'https://your-app.pages.dev';
+                    }
+                })
+                .catch(error => {
+                    console.log('Streamlitアプリケーションを起動中...');
+                    // エラーの場合は5秒後に再試行
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 5000);
+                });
+        }, 3000);
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🎭</div>
+        <h1>AITuber ルリ</h1>
+        <div class="loading">アプリケーションを起動中...</div>
+        <div class="spinner"></div>
+        <div class="info">
+            <p>戯曲『あいのいろ』の主人公「ルリ」のAITuberシステム</p>
+            <p><strong>原作:</strong> ozaki-taisuke | <strong>原画:</strong> まつはち さん</p>
+        </div>
+    </div>
+</body>
+</html>

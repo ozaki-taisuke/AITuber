@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "build": {
+    "command": "pip install -r requirements.txt",
+    "destination": ".",
+    "environment": {
+      "PYTHON_VERSION": "3.11",
+      "NODE_VERSION": "18"
+    }
+  },
+  "deployment": {
+    "environment_variables": {
+      "ENVIRONMENT": "production",
+      "DEBUG": "False",
+      "BETA_AUTH_REQUIRED": "False",
+      "ENABLE_AI_FEATURES": "True",
+      "ENABLE_OBS_INTEGRATION": "False",
+      "ENABLE_STREAMING_FEATURES": "False"
+    }
+  }
+}
