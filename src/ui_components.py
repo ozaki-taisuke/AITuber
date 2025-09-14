@@ -6,137 +6,185 @@
 - メッセージ入力フォーム
 - エクスポート機能
 - レスポンシブデザイン対応
+- 感情学習による色彩変化システム
 """
 from typing import Dict, Any, Optional, List
 import streamlit as st
 import time
-from src.chat_manager import get_chat_manager, get_ai_generator, handle_chat_message, ChatMessage
+
+try:
+    from src.chat_manager import get_chat_manager, get_ai_generator, handle_chat_message, ChatMessage
+    from src.emotion_system import EmotionSystem, EmotionType, ColorStage
+    EMOTION_SYSTEM_AVAILABLE = True
+except ImportError:
+    EMOTION_SYSTEM_AVAILABLE = False
+    print("⚠️ 感情システムまたはチャットマネージャーが利用できません")
 
 
 class ChatUI:
-    """チャット用UIコンポーネントクラス"""
+    """チャット用UIコンポーネントクラス（感情学習対応）"""
     
     def __init__(self, container_key: str = "default_chat"):
         self.container_key = container_key
-        self.chat_manager = get_chat_manager()
+        self.chat_manager = get_chat_manager() if 'get_chat_manager' in globals() else None
+        
+        # 感情システムの初期化
+        if EMOTION_SYSTEM_AVAILABLE:
+            self.emotion_system = EmotionSystem()
+        else:
+            self.emotion_system = None
     
     def render_chat_styles(self):
-        """チャット用CSSスタイルを適用"""
-        st.markdown("""
+        """チャット用CSSスタイルを適用（感情対応色彩変化）"""
+        
+        # 感情システムから色情報を取得
+        bubble_color = "#ff9a9e"  # デフォルト色
+        border_color = "#fecfef"
+        
+        if self.emotion_system:
+            color_palette = self.emotion_system.get_current_color_palette()
+            bubble_color = color_palette.get("bubble", bubble_color)
+            
+            # 虹色エフェクトの場合
+            if color_palette.get("rainbow_effect"):
+                bubble_style = f"background: {color_palette['border']};"
+            else:
+                bubble_style = f"background: linear-gradient(135deg, {bubble_color} 0%, {border_color} 50%, {border_color} 100%);"
+        else:
+            bubble_style = f"background: linear-gradient(135deg, {bubble_color} 0%, {border_color} 50%, {border_color} 100%);"
+        
+        st.markdown(f"""
         <style>
-        .chat-container {
+        .chat-container {{
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 1rem;
             border-radius: 10px;
             margin: 1rem 0;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
+        }}
         
-        .user-message {
+        .user-message {{
             background: rgba(255, 255, 255, 0.9);
             padding: 0.8rem;
             border-radius: 18px 18px 4px 18px;
             margin: 0.5rem 0;
             margin-left: 2rem;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
+        }}
         
-        .ruri-message {
-            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+        .ruri-message {{
+            {bubble_style}
             padding: 0.8rem;
             border-radius: 18px 18px 18px 4px;
             margin: 0.5rem 0;
             margin-right: 2rem;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             color: #333;
-        }
+            transition: all 0.3s ease;
+        }}
         
-        /* アニメーション効果 - スライドアニメーションを削除 */
-        .ruri-message.thinking {
-            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+        /* 感情状態による追加スタイル */
+        .ruri-message.emotion-joy {{
+            background: linear-gradient(135deg, #FFF8DC 0%, #FFFF88 50%, #FFF8DC 100%);
+        }}
+        
+        .ruri-message.emotion-anger {{
+            background: linear-gradient(135deg, #FFE4E1 0%, #FF9999 50%, #FFE4E1 100%);
+        }}
+        
+        .ruri-message.emotion-sadness {{
+            background: linear-gradient(135deg, #E6F3FF 0%, #B3D9FF 50%, #E6F3FF 100%);
+        }}
+        
+        .ruri-message.emotion-love {{
+            background: linear-gradient(135deg, #FFB6C1 0%, #FF91A4 50%, #FFB6C1 100%);
+        }}
+        
+        /* アニメーション効果 */
+        .ruri-message.thinking {{
             opacity: 0.9;
-        }
+            animation: pulse 2s infinite;
+        }}
         
-        .ruri-message.typing {
-            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
-        }
+        @keyframes pulse {{
+            0% {{ transform: scale(1); }}
+            50% {{ transform: scale(1.02); }}
+            100% {{ transform: scale(1); }}
+        }}
         
-        .ruri-message {
-            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
-            padding: 0.8rem;
-            border-radius: 18px 18px 18px 4px;
-            margin: 0.5rem 0;
-            margin-right: 2rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            color: #333;
-        }
-        
-        .thinking-dots {
+        .thinking-dots {{
             animation: thinking 1.5s infinite;
-        }
+        }}
         
-        @keyframes thinking {
-            0%, 20% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
+        @keyframes thinking {{
+            0%, 20% {{ opacity: 1; }}
+            50% {{ opacity: 0.5; }}
+            100% {{ opacity: 1; }}
+        }}
         
-        .typing-cursor {
+        .typing-cursor {{
             animation: blink 1s infinite;
             font-weight: bold;
             color: #333;
-        }
+        }}
         
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0; }
-        }
-        }
+        @keyframes blink {{
+            0%, 50% {{ opacity: 1; }}
+            51%, 100% {{ opacity: 0; }}
+        }}
         
-        .message-timestamp {
+        .message-timestamp {{
             font-size: 0.75em;
             color: #666;
             margin: 0.2rem 0;
-        }
+        }}
         
-        .message-label {
+        .message-label {{
             font-weight: bold;
             margin-bottom: 0.3rem;
             display: block;
-        }
+        }}
         
-        .message-content {
+        .message-content {{
             line-height: 1.5;
-        }
+        }}
         
-        .latest-message {
+        .latest-message {{
             border: 2px solid #4CAF50;
             box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
-        }
+        }}
+        
+        /* 成長度表示 */
+        .growth-indicator {{
+            font-size: 0.8em;
+            opacity: 0.7;
+            text-align: right;
+            margin-top: 0.5rem;
+        }}
         
         /* レスポンシブ対応 */
-        @media (max-width: 768px) {
-            .chat-container {
+        @media (max-width: 768px) {{
+            .chat-container {{
                 padding: 0.7rem;
                 margin: 0.7rem 0;
-            }
+            }}
             
-            .user-message, .ruri-message {
+            .user-message, .ruri-message {{
                 margin-left: 0.5rem;
                 margin-right: 0.5rem;
                 padding: 0.6rem;
-            }
-        }
+            }}
+        }}
         
         /* 小画面対応 */
-        @media (max-width: 480px) {
-            .user-message, .ruri-message {
+        @media (max-width: 480px) {{
+            .user-message, .ruri-message {{
                 margin-left: 0.2rem;
                 margin-right: 0.2rem;
                 padding: 0.5rem;
                 font-size: 0.9rem;
-            }
-        }
+            }}
+        }}
         </style>
         """, unsafe_allow_html=True)
     
@@ -217,7 +265,7 @@ class ChatUI:
         return None
 
     def _handle_message_with_live_feedback(self, message: str, user_level: Any, features: Dict[str, bool]):
-        """ライブフィードバック付きメッセージ処理（消失防止版）"""
+        """ライブフィードバック付きメッセージ処理（感情学習対応）"""
         # 会話処理中フラグを設定（ナビゲーション保護）
         st.session_state.chat_processing = True
         
@@ -225,14 +273,32 @@ class ChatUI:
             # 1. タイムスタンプを統一
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
             
-            # 2. 専用コンテナを作成（履歴とは別管理）
+            # 2. 感情検出（ユーザーメッセージから）
+            detected_emotion = None
+            if self.emotion_system:
+                emotions = self.emotion_system.detect_emotion_from_text(message)
+                # 最も強い感情を特定
+                if emotions:
+                    detected_emotion = max(emotions.items(), key=lambda x: x[1])
+                    if detected_emotion[1] > 0.1:  # 閾値以上の場合のみ学習
+                        self.emotion_system.learn_emotion(detected_emotion[0], detected_emotion[1])
+            
+            # 3. 専用コンテナを作成（履歴とは別管理）
             live_container = st.container()
             
             with live_container:
-                # ルリの吹き出し（上部）
+                # 現在の色彩情報を取得
+                bubble_color = "#ff9a9e"  # デフォルト
+                emotion_class = ""
+                
+                if self.emotion_system and detected_emotion:
+                    bubble_color = self.emotion_system.get_bubble_color_for_emotion(detected_emotion[0])
+                    emotion_class = f" emotion-{detected_emotion[0].value}"
+                
+                # ルリの吹き出し（上部・感情対応色）
                 ruri_placeholder = st.empty()
                 ruri_placeholder.markdown(f"""
-                <div class="ruri-message">
+                <div class="ruri-message{emotion_class}">
                     <span class="message-label">🎭 ルリ</span>
                     <div class="message-timestamp">{timestamp}</div>
                     <div class="message-content">💭 考え中...</div>
@@ -240,6 +306,71 @@ class ChatUI:
                 """, unsafe_allow_html=True)
                 
                 # ユーザーメッセージ（下部）
+                st.markdown(f"""
+                <div class="user-message">
+                    <span class="message-label">👤 あなた</span>
+                    <div class="message-timestamp">{timestamp}</div>
+                    <div class="message-content">{message}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # 成長度表示
+                if self.emotion_system:
+                    growth_level = self.emotion_system.get_growth_level()
+                    color_stage = self.emotion_system.color_stage.value
+                    st.markdown(f"""
+                    <div class="growth-indicator">
+                        感情成長度: {growth_level:.1%} | 段階: {color_stage}
+                        {f"| 検出: {detected_emotion[0].value}" if detected_emotion and detected_emotion[1] > 0.1 else ""}
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            # 4. AI応答生成
+            try:
+                if 'get_ai_generator' in globals():
+                    ai_generator = get_ai_generator()
+                    if ai_generator:
+                        ai_response = ai_generator.generate_response(message)
+                    else:
+                        ai_response = "すみません、AIが応答できません。"
+                else:
+                    # フォールバック応答（ルリらしく）
+                    fallback_responses = [
+                        "そうですね...とても興味深いお話ですね。",
+                        "なるほど！私もそう思います。",
+                        "それについて、もう少し教えていただけますか？",
+                        "わぁ、新しいことを教えていただけて嬉しいです！",
+                        "そのお気持ち、少し分かるような気がします。"
+                    ]
+                    import random
+                    ai_response = random.choice(fallback_responses)
+                
+                # 5. AI応答の感情分析と学習
+                if self.emotion_system:
+                    ai_emotions = self.emotion_system.detect_emotion_from_text(ai_response)
+                    for emotion, intensity in ai_emotions.items():
+                        if intensity > 0.1:
+                            self.emotion_system.learn_emotion(emotion, intensity * 0.5)  # AI応答は半分の強度
+                
+                # 6. 最終応答の表示（色更新）
+                final_emotion_class = ""
+                if self.emotion_system and detected_emotion:
+                    final_emotion_class = f" emotion-{detected_emotion[0].value}"
+                
+                ruri_placeholder.markdown(f"""
+                <div class="ruri-message{final_emotion_class}">
+                    <span class="message-label">🎭 ルリ</span>
+                    <div class="message-timestamp">{timestamp}</div>
+                    <div class="message-content">{ai_response}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+            except Exception as e:
+                st.error(f"AI応答エラー: {e}")
+            
+        finally:
+            # 会話処理中フラグをクリア
+            st.session_state.chat_processing = False
                 st.markdown(f"""
                 <div class="user-message">
                     <span class="message-label">👤 あなた</span>

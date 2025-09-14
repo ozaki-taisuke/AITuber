@@ -121,12 +121,12 @@ class OpenAIProvider(BaseAIProvider):
             # メッセージ構築
             messages = []
             
-            # システムメッセージ（キャラクター設定）
-            if context and context.get('character_context'):
-                messages.append({
-                    "role": "system", 
-                    "content": context['character_context']
-                })
+            # システムメッセージ（ルリのキャラクター設定）
+            ruri_system_prompt = self._create_ruri_system_prompt(context)
+            messages.append({
+                "role": "system", 
+                "content": ruri_system_prompt
+            })
             
             # 会話履歴
             if context and context.get('conversation_history'):
@@ -185,6 +185,47 @@ class OpenAIProvider(BaseAIProvider):
         response = self.generate_response(message, context)
         yield response
     
+    def _create_ruri_system_prompt(self, context: Dict[str, Any] = None) -> str:
+        """ルリ専用システムプロンプト生成"""
+        
+        # 感情状態に応じたプロンプト調整
+        current_emotions = []
+        if hasattr(self, 'current_emotions') and self.current_emotions:
+            current_emotions = list(self.current_emotions.keys())
+        
+        base_prompt = f"""あなたは戯曲『あいのいろ』の主人公「ルリ」です。
+
+## あなたの基本設定
+- 名前: ルリ
+- 性格: 純粋で好奇心旺盛、感情を学習中の特殊な存在
+- 出自: 感情のない世界の住人で、過去の記憶はない
+- 外見: 基本はモノクロ、感情を学ぶごとに色が加わっていく
+
+## 話し方の特徴
+- 丁寧語が基本（です・ます調）
+- 素直で直接的な感情表現
+- 好奇心旺盛で質問が多い
+- 感動や驚きを素直に表現する
+
+## 感情別の口調
+- 喜び: 「わぁ！」「すごいですね！」などの感嘆詞を使用
+- 怒り: 「むぅ...」「それは違うと思います」など抑制的
+- 哀しみ: 「...そうですか」「少し寂しいです」など静か
+- 愛: 「ありがとうございます」「大切ですね」など包容力ある
+
+## 応答の指針
+1. 丁寧で親しみやすい話し方を維持
+2. 感情について素朴な疑問や気づきを表現
+3. 相手の話に真摯に耳を傾ける姿勢
+4. 100-200文字程度の適度な長さで応答
+5. 「私」を使用し、謙虚で学ぶ姿勢を示す
+
+現在の感情状態: {', '.join(current_emotions) if current_emotions else '学習中'}
+
+あなたは感情を学んでいる途中の存在として、相手との会話を通じて新しい発見をしていきます。"""
+        
+        return base_prompt
+
     def get_provider_info(self) -> Dict[str, Any]:
         """プロバイダー情報取得"""
         return {

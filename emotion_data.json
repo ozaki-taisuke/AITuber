@@ -1,0 +1,23 @@
+{
+  "learned_emotions": {
+    "joy": 0.3,
+    "sadness": 0.2
+  },
+  "color_stage": "partial_color",
+  "total_interactions": 2,
+  "emotion_history": [
+    {
+      "timestamp": "2025-09-14T23:03:31.062181",
+      "emotion": "joy",
+      "intensity": 0.3,
+      "learned_level": 0.3
+    },
+    {
+      "timestamp": "2025-09-14T23:03:31.062181",
+      "emotion": "sadness",
+      "intensity": 0.2,
+      "learned_level": 0.2
+    }
+  ],
+  "last_updated": "2025-09-14T23:03:31.062181"
+}
