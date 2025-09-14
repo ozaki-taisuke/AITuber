@@ -153,5 +153,26 @@ ehthumbs.db
 Thumbs.db
 
 # Project specific
+# 機密情報
+.env
+*.env
+*.env.local
+*.env.production
+*.env.development
+.streamlit/secrets.toml
+config/secrets.json
+src/secrets.py
+secrets/
+*.secret
+*.key
+*.pem
+*.p12
+*.pfx
+api_keys.txt
+passwords.txt
+tokens.txt
+credentials.json
+
+# API Keys
 *.api_key
 config.local.json

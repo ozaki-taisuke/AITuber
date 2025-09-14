@@ -20,7 +20,29 @@ class UnifiedAuth:
     
     @staticmethod
     def authenticate_user(password: str) -> UserLevel:
-        """パスワードによるユーザーレベル判定"""
+        """パスワードによるユーザーレベル判定（セキュア設定対応）"""
+        try:
+            # セキュア設定管理システムから認証を試行
+            from src.secure_config import get_config_manager
+            config_manager = get_config_manager()
+            
+            # 各レベルのパスワードをチェック
+            admin_pass = config_manager.get_raw_password('ADMIN_PASSWORD')
+            if admin_pass and config_manager.verify_password(password, admin_pass):
+                return UserLevel.ADMIN
+                
+            dev_pass = config_manager.get_raw_password('DEVELOPER_PASSWORD')
+            if dev_pass and config_manager.verify_password(password, dev_pass):
+                return UserLevel.DEVELOPER
+                
+            beta_pass = config_manager.get_raw_password('BETA_PASSWORD')
+            if beta_pass and config_manager.verify_password(password, beta_pass):
+                return UserLevel.BETA
+        except Exception:
+            # セキュア設定が利用できない場合はフォールバック
+            pass
+        
+        # フォールバック: 従来の設定ファイル認証
         if UnifiedAuth.check_password(password, UnifiedConfig.ADMIN_PASSWORD):
             return UserLevel.ADMIN
         elif UnifiedAuth.check_password(password, UnifiedConfig.DEVELOPER_PASSWORD):

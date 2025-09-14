@@ -20,24 +20,24 @@ class UnifiedConfig:
     # 認証設定（環境変数・Streamlit Secrets対応）
     @classmethod
     def get_passwords(cls) -> Dict[str, str]:
-        """認証パスワードを取得"""
+        """認証パスワードを取得（デフォルトは空文字）"""
         try:
             # Streamlit secrets から取得を試行
             import streamlit as st
             if hasattr(st, 'secrets'):
                 return {
-                    'BETA_PASSWORD': st.secrets.get('BETA_PASSWORD', 'ruri_beta_2024'),
-                    'DEVELOPER_PASSWORD': st.secrets.get('DEVELOPER_PASSWORD', 'ruri_dev_2024'),
-                    'ADMIN_PASSWORD': st.secrets.get('ADMIN_PASSWORD', 'ruri_admin_2024')
+                    'BETA_PASSWORD': st.secrets.get('BETA_PASSWORD', ''),
+                    'DEVELOPER_PASSWORD': st.secrets.get('DEVELOPER_PASSWORD', ''),
+                    'ADMIN_PASSWORD': st.secrets.get('ADMIN_PASSWORD', '')
                 }
         except Exception:
             pass
         
-        # 環境変数から取得
+        # 環境変数から取得（デフォルトは空文字）
         return {
-            'BETA_PASSWORD': os.getenv('BETA_PASSWORD', 'ruri_beta_2024'),
-            'DEVELOPER_PASSWORD': os.getenv('DEVELOPER_PASSWORD', 'ruri_dev_2024'),
-            'ADMIN_PASSWORD': os.getenv('ADMIN_PASSWORD', 'ruri_admin_2024')
+            'BETA_PASSWORD': os.getenv('BETA_PASSWORD', ''),
+            'DEVELOPER_PASSWORD': os.getenv('DEVELOPER_PASSWORD', ''),
+            'ADMIN_PASSWORD': os.getenv('ADMIN_PASSWORD', '')
         }
     
     # 認証設定
@@ -46,9 +46,35 @@ class UnifiedConfig:
     DEVELOPER_PASSWORD = _passwords['DEVELOPER_PASSWORD']
     ADMIN_PASSWORD = _passwords['ADMIN_PASSWORD']
     
+    # API設定（セキュア設定管理システム対応）
+    @classmethod
+    def get_api_keys(cls) -> Dict[str, str]:
+        """APIキーを取得（セキュア設定優先）"""
+        try:
+            # セキュア設定管理システムから取得を試行
+            from src.secure_config import get_config_manager
+            config_manager = get_config_manager()
+            openai_key = config_manager.get_raw_api_key('OPENAI_API_KEY')
+            if openai_key:
+                return {'OPENAI_API_KEY': openai_key}
+        except Exception:
+            pass
+        
+        # 環境変数・Streamlit Secretsから取得
+        try:
+            import streamlit as st
+            if hasattr(st, 'secrets'):
+                return {
+                    'OPENAI_API_KEY': st.secrets.get('OPENAI_API_KEY', os.getenv('OPENAI_API_KEY', ''))
+                }
+        except Exception:
+            pass
+        
+        return {'OPENAI_API_KEY': os.getenv('OPENAI_API_KEY', '')}
+    
     # API設定
-    OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
-    OLLAMA_BASE_URL = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
+    _api_keys = get_api_keys.__func__(None)
+    OPENAI_API_KEY = _api_keys['OPENAI_API_KEY']
     
     # アプリケーション設定
     APP_NAME = "AITuber ルリ"

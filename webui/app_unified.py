@@ -373,7 +373,40 @@ def show_streaming_page(user_level: UserLevel, features: Dict[str, bool]):
 def show_settings_page(user_level: UserLevel, features: Dict[str, bool]):
     """設定ページ"""
     st.title("⚙️ システム設定")
-    st.info("🚧 開発者機能 - システム設定")
+    
+    if user_level == UserLevel.ADMIN:
+        # 管理者用設定UI
+        try:
+            from src.secure_config import show_admin_settings_ui
+            show_admin_settings_ui()
+        except ImportError:
+            st.error("⚠️ セキュア設定管理システムが利用できません。cryptographyとbcryptをインストールしてください。")
+            st.code("pip install cryptography bcrypt")
+    else:
+        st.info("🚧 開発者機能 - システム設定（基本版）")
+        
+        st.markdown("### 📊 現在の設定状況")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("**認証レベル**")
+            st.write(f"現在のレベル: {user_level.value}")
+            
+        with col2:
+            st.markdown("**利用可能機能**")
+            available_count = sum(1 for v in features.values() if v)
+            total_count = len(features)
+            st.write(f"利用可能: {available_count}/{total_count}")
+        
+        if user_level != UserLevel.ADMIN:
+            st.info("🔒 詳細なシステム設定には管理者権限が必要です")
+            st.markdown("管理者パスワードでアップグレードすると、以下の機能が利用できます：")
+            st.markdown("""
+            - 🔐 認証パスワードの変更
+            - 🔑 APIキーの管理
+            - ⚙️ 機能フラグの切り替え
+            - 📊 システム詳細情報
+            """)
 
 def show_user_management_page(user_level: UserLevel, features: Dict[str, bool]):
     """ユーザー管理ページ"""
