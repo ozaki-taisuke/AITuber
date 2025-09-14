@@ -194,29 +194,137 @@ try:
     import cv2
     import numpy as np
     IMAGE_PROCESSING_AVAILABLE = True
+    print("✅ 画像処理機能: 利用可能")
 except ImportError as e:
     print(f"⚠️ 画像処理機能の読み込みに失敗: {e}")
+    IMAGE_PROCESSING_AVAILABLE = False
 
 try:
     import plotly.graph_objects as go
     PLOTTING_AVAILABLE = True
+    print("✅ Plotly機能: 利用可能")
 except ImportError:
     print("⚠️ Plotly機能は無効です")
+    PLOTTING_AVAILABLE = False
 
 def main():
     """統一WebUIメイン関数"""
     
-    # 設定モジュールの再初期化（リロード対応）
-    initialize_config_modules()
-    
-    # ホットリロード対応: セッション状態の保護
-    if 'hot_reload_protection' not in st.session_state:
-        st.session_state.hot_reload_protection = True
-        # 既存の認証状態があればそれを維持
-        if 'authenticated' not in st.session_state:
-            st.session_state.authenticated = False
-        if 'user_level' not in st.session_state:
-            st.session_state.user_level = UserLevel.PUBLIC if hasattr(UserLevel, 'PUBLIC') else "public"
+    try:
+        # 設定モジュールの再初期化（リロード対応）
+        initialize_config_modules()
+        
+        # ホットリロード対応: セッション状態の保護
+        if 'hot_reload_protection' not in st.session_state:
+            st.session_state.hot_reload_protection = True
+            # 既存の認証状態があればそれを維持
+            if 'authenticated' not in st.session_state:
+                st.session_state.authenticated = False
+            if 'user_level' not in st.session_state:
+                st.session_state.user_level = UserLevel.PUBLIC if hasattr(UserLevel, 'PUBLIC') else "public"
+        
+        print("🚀 アプリケーション初期化開始...")
+        
+        # レスポンシブデザインのセットアップ（安全実行）
+        try:
+            setup_responsive_design()
+            print("✅ レスポンシブデザイン: 設定完了")
+        except Exception as e:
+            print(f"⚠️ レスポンシブデザイン設定エラー: {e}")
+            # デザインエラーでもアプリ続行
+        
+        # セッション状態の初期化（ホットリロード対応強化）
+        if 'current_page' not in st.session_state:
+            st.session_state.current_page = 'home'
+        if 'initialization_complete' not in st.session_state or not st.session_state.initialization_complete:
+            # 初期化が完了していない場合のみ実行
+            if 'authenticated' not in st.session_state:
+                st.session_state.authenticated = False
+            if 'user_level' not in st.session_state:
+                st.session_state.user_level = UserLevel.PUBLIC if hasattr(UserLevel, 'PUBLIC') else "public"
+            
+            # 初期化完了フラグを設定
+            st.session_state.initialization_complete = True
+        
+        print("🎯 設定取得中...")
+        
+        # 設定の取得（エラーハンドリング強化）
+        try:
+            user_level = UnifiedConfig.get_user_level(st.session_state) if UnifiedConfig else "public"
+            ui_config = UnifiedConfig.get_ui_config(user_level) if UnifiedConfig else {"title": "AITuber ルリ", "theme": "default"}
+            features = UnifiedConfig.get_available_features(user_level) if UnifiedConfig else {"ai_conversation": True, "character_status": True}
+        except Exception as e:
+            print(f"⚠️ 設定取得エラー: {e}")
+            # フォールバック設定
+            user_level = "public"
+            ui_config = {"title": "AITuber ルリ", "theme": "default"}
+            features = {"ai_conversation": True, "character_status": True}
+        
+        print(f"👤 ユーザーレベル: {user_level}")
+        print(f"🔧 利用可能機能: {list(features.keys())}")
+        
+        # レスポンシブサイドバーの設定
+        setup_responsive_sidebar(user_level, features, ui_config)
+        
+        # 認証画面の表示判定
+        current_page = st.session_state.get('current_page', 'home')
+        is_owner = (hasattr(UserLevel, 'OWNER') and user_level == UserLevel.OWNER) or user_level == "owner"
+        
+        # ホーム、AI会話は常にアクセス可能
+        public_pages = ['home', 'ai_conversation', 'character']
+        
+        if current_page in public_pages or is_owner:
+            # アクセス許可 - 通常処理を継続
+            pass
+        elif st.session_state.get('show_auth', False):
+            # 明示的に認証画面を要求された場合
+            show_auth_page()
+            return
+        else:
+            # 認証が必要なページにアクセスしようとした場合のみ認証画面表示
+            if current_page not in public_pages:
+                show_auth_page()
+                return
+        
+        print(f"📄 ページ表示: {current_page}")
+        
+        # メインページの表示
+        page = st.session_state.get('current_page', 'home')
+        
+        if page == 'home':
+            show_home_page(user_level, features, ui_config)
+        elif page == 'character' and features.get('character_status'):
+            show_character_page(user_level, features)
+        elif page == 'ai_conversation' and features.get('ai_conversation'):
+            show_ai_conversation_page(user_level, features)
+        elif page == 'image_analysis' and features.get('image_analysis'):
+            show_image_analysis_page(user_level, features)
+        elif page == 'streaming' and features.get('streaming_integration'):
+            show_streaming_page(user_level, features)
+        elif page == 'settings' and features.get('system_settings'):
+            show_settings_page(user_level, features)
+        elif page == 'analytics' and features.get('analytics'):
+            show_analytics_page(user_level, features)
+        else:
+            st.error(f"ページ '{page}' は利用できません")
+            
+        print("✅ アプリケーション表示完了")
+        
+    except Exception as e:
+        print(f"💥 致命的エラー: {e}")
+        st.error(f"アプリケーションの初期化に失敗しました: {e}")
+        st.markdown("### 🚨 緊急フォールバックモード")
+        st.markdown("基本的な機能のみ利用可能です")
+        
+        # 最小限のUI表示
+        st.title("🌟 AITuber ルリ")
+        st.info("現在、軽量モードで動作しています")
+        
+        # 基本的なチャット機能のみ提供
+        chat_input = st.text_input("ルリにメッセージを送信:")
+        if st.button("送信") and chat_input:
+            st.write(f"**あなた**: {chat_input}")
+            st.write("**ルリ**: ありがとうございます！現在システムを調整中です...")
     
     # 初期化プロセスの表示（認証済みの場合はスキップ）
     if 'initialization_complete' not in st.session_state or not st.session_state.get('authenticated', False):
