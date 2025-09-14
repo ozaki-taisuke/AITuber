@@ -265,7 +265,7 @@ def show_image_page():
     
     if uploaded_file is not None:
         # 画像表示
-        st.image(uploaded_file, caption="アップロード画像", use_column_width=True)
+        st.image(uploaded_file, caption="アップロード画像", use_container_width=True)
         
         if IMAGE_PROCESSING_AVAILABLE:
             # 実際の画像分析（OpenCVが利用可能な場合）

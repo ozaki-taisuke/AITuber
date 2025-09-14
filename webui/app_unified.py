@@ -220,7 +220,7 @@ def show_home_page(user_level: UserLevel, features: Dict[str, bool], ui_config: 
     if os.path.exists(image_path):
         col_left, col_center, col_right = st.columns([1, 2, 1])
         with col_center:
-            st.image(image_path, caption="🎭 ルリちゃん", use_column_width=True)
+            st.image(image_path, caption="🎭 ルリちゃん", use_container_width=True)
     else:
         st.info("🎭 ルリの画像を読み込み中...")
     
@@ -425,7 +425,7 @@ def show_image_page(user_level: UserLevel, features: Dict[str, bool]):
     )
     
     if uploaded_file is not None:
-        st.image(uploaded_file, caption="アップロード画像", use_column_width=True)
+        st.image(uploaded_file, caption="アップロード画像", use_container_width=True)
         
         if features.get("advanced_image_analysis") and IMAGE_PROCESSING_AVAILABLE:
             # 高度な画像分析

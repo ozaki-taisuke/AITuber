@@ -261,7 +261,7 @@ def show_home_page(user_level: UserLevel, features: Dict[str, bool], ui_config: 
     if os.path.exists(image_path):
         col_left, col_center, col_right = st.columns([0.5, 3, 0.5])
         with col_center:
-            st.image(image_path, caption="🎭 ルリちゃん", use_column_width=True)
+            st.image(image_path, caption="🎭 ルリちゃん", use_container_width=True)
     else:
         st.info("🎭 ルリの画像を読み込み中...")
     
