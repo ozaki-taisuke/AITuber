@@ -646,6 +646,23 @@ def setup_responsive_design():
         box-shadow: 0 12px 48px rgba(99, 102, 241, 0.3);
     }
     
+    /* 画像コンテナのレスポンシブ対応 */
+    div[data-testid="column"]:first-child {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0 1rem;
+    }
+    
+    div[data-testid="column"]:first-child img {
+        max-width: min(300px, 90vw);
+        height: auto;
+        border-radius: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        border: 3px solid #e2e8f0;
+        margin: 0 auto;
+    }
+    
     /* カラーパレット - 戯曲『あいのいろ』テーマ */
     :root {
         --primary-color: #6366f1;      /* 感情学習の青 */
@@ -712,14 +729,21 @@ def setup_responsive_design():
             padding: 0.5rem !important;
         }
         
-        /* モバイルでのカラム幅調整 */
+        /* モバイルでのカラム幅調整とレスポンシブ画像 */
         div[data-testid="column"]:nth-child(1) {
-            flex: 2 !important;
+            flex: 1 !important;
+            padding: 0.5rem !important;
+            text-align: center;
         }
         
-        div[data-testid="column"]:nth-child(2),
-        div[data-testid="column"]:nth-child(3) {
+        div[data-testid="column"]:nth-child(1) img {
+            max-width: min(250px, 85vw) !important;
+            margin: 0 auto !important;
+        }
+        
+        div[data-testid="column"]:nth-child(2) {
             flex: 1 !important;
+            padding: 0.5rem !important;
         }
     }
     
@@ -731,6 +755,19 @@ def setup_responsive_design():
         
         .ruri-image-container img {
             max-width: 85%;
+        }
+        
+        /* タブレットでの画像調整 */
+        div[data-testid="column"]:first-child img {
+            max-width: min(280px, 80vw);
+        }
+    }
+    
+    /* デスクトップ対応 */
+    @media (min-width: 1025px) {
+        /* デスクトップでの画像調整 */
+        div[data-testid="column"]:first-child img {
+            max-width: min(300px, 25vw);
         }
     }
     
@@ -771,6 +808,22 @@ def setup_responsive_design():
         background-color: #fef3c7;
         color: #92400e;
         border: 1px solid #f59e0b;
+    }
+    
+    /* expanderのスタイル改善 */
+    .streamlit-expander {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        border: 1px solid #cbd5e1;
+        border-radius: 0.5rem;
+        margin: 0.5rem 0;
+    }
+    
+    /* レスポンシブ対応：モバイル */
+    @media (max-width: 768px) {
+        /* モバイルでは縦並び */
+        div[data-testid="column"] {
+            margin-bottom: 1rem;
+        }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -851,20 +904,58 @@ def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
     
     # メイン画像とタイトル
     st.markdown("""
-    <div style="text-align: center; margin-bottom: 2rem;">
+    <div style="text-align: center; margin-bottom: 1.5rem;">
         <h1 style="color: #4a90e2; margin-bottom: 0.5rem;">🌟 pupa: ルリ</h1>
-        <p style="color: #666; font-size: 1.1rem;">戯曲『あいのいろ』から生まれた感情学習AI</p>
+        <p style="color: #666; font-size: 1.1rem;">戯曲『あいのいろ』から生まれた感情学習型AI</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # レスポンシブ対応のルリ画像表示（コンパクト版）
+    # レスポンシブ対応：画像とキャラクター設定の配置
     image_path = os.path.join(project_root, "assets", "ruri_imageboard.png")
-    if os.path.exists(image_path):
-        col_left, col_center, col_right = st.columns([1, 2, 1])
-        with col_center:
-            st.image(image_path, width="stretch")
-    else:
-        st.info("🎭 ルリの画像を読み込み中...")
+    
+    # レスポンシブレイアウト（デスクトップ：横並び、モバイル：縦並び）
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        st.markdown("#### 🎭 ルリ")
+        if os.path.exists(image_path):
+            # レスポンシブ画像コンテナ
+            st.markdown("""
+            <div style="
+                display: flex; 
+                justify-content: center; 
+                align-items: center; 
+                margin: 1rem auto; 
+                padding: 0 1rem;
+                max-width: 100%;
+            ">
+            """, unsafe_allow_html=True)
+            st.image(image_path, width=300, use_column_width='auto')
+            st.markdown("</div>", unsafe_allow_html=True)
+        else:
+            st.info("🎭 ルリの画像を読み込み中...")
+    
+    with col2:
+        # キャラクター設定ブロック（シンプルなStreamlitコンポーネント）
+        st.markdown("#### 📖 キャラクター設定")
+        
+        # 情報カード風の表示
+        with st.expander("📋 基本情報", expanded=True):
+            st.markdown("**名前**: ルリ")
+            st.markdown("**特徴**: 感情を学習して段階的に色づいていくAI")
+        
+        with st.expander("🎯 現在の状態", expanded=True):
+            st.markdown("**学習段階**: 🖤 Monochrome (学習開始段階)")
+            st.markdown("**感情学習進度**: 5%")
+            
+            # プログレスバー
+            progress = 0.05
+            st.progress(progress)
+        
+        with st.expander("📚 原作情報", expanded=True):
+            st.markdown("**原作**: 戯曲『あいのいろ』")
+            st.markdown("**作者**: 尾崎太祐 / Otty")
+            st.markdown("**キャラクターデザイン**: まつはち")
     
     # 会話エリア（シンプル版）
     st.markdown("### 💬 ルリと話す")
@@ -916,8 +1007,7 @@ def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
     st.markdown("---")
     st.markdown(
         "<div style='text-align: center; color: #666; font-size: 0.8em; margin-top: 2rem;'>"
-        "原作・企画: 尾崎太祐 / Otty（戯曲『あいのいろ』） | キャラクターデザイン原案: まつはち | "
-        "<a href='https://github.com/ozaki-taisuke/pupa-Ruri' target='_blank' style='color: #666;'>GitHub</a>"
+        "原作・企画: 尾崎太祐 / Otty（戯曲『あいのいろ』） | キャラクターデザイン: まつはち | "
         "</div>", 
         unsafe_allow_html=True
     )
@@ -1066,6 +1156,16 @@ def save_chat_history_to_session():
     except Exception as e:
         if not CLOUD_MODE:
             print(f"履歴保存エラー: {e}")
+
+def get_base64_image(image_path: str) -> str:
+    """画像をbase64エンコードして返す"""
+    try:
+        import base64
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    except Exception as e:
+        print(f"画像エンコードエラー: {e}")
+        return ""
 
 def load_chat_history_from_session():
     """セッションからチャット履歴を復元"""
