@@ -2,6 +2,48 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "🎭 統一WebUI起動",
+			"type": "shell",
+			"command": "python -m streamlit run webui\\app_unified.py",
+			"isBackground": true,
+			"group": "build",
+			"problemMatcher": [],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "new",
+				"showReuseMessage": true,
+				"clear": false
+			}
+		},
+		{
+			"label": "🎭 統一WebUI固定ポート起動",
+			"type": "shell",
+			"command": "python -m streamlit run webui\\app_unified.py --server.port 8501 --server.address localhost",
+			"isBackground": true,
+			"group": "build",
+			"problemMatcher": [],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "new"
+			}
+		},
+		{
+			"label": "🔧 統一環境テスト",
+			"type": "shell",
+			"command": "python -c \"from src.unified_config import UnifiedConfig; from src.unified_auth import UnifiedAuth; print('✅ 統一環境モジュール読み込み成功')\"",
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
 			"label": "ルリちゃんWebUI起動",
 			"type": "shell",
 			"command": "streamlit run webui/app.py",

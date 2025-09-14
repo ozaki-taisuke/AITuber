@@ -1,8 +1,8 @@
 [theme]
-primaryColor = "#667eea"
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#f0f2f6"
-textColor = "#262730"
+primaryColor = "#6366f1"
+backgroundColor = "#0f172a"
+secondaryBackgroundColor = "#1e293b"
+textColor = "#e2e8f0"
 
 [server]
 port = 8501
@@ -19,7 +19,11 @@ magicEnabled = true
 
 [client]
 toolbarMode = "minimal"
-showErrorDetails = true
+showErrorDetails = false
 
 [global]
 developmentMode = false
+
+[logger]
+level = "info"
+messageFormat = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
