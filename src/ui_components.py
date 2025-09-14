@@ -9,6 +9,7 @@
 """
 from typing import Dict, Any, Optional, List
 import streamlit as st
+import time
 from src.chat_manager import get_chat_manager, get_ai_generator, handle_chat_message, ChatMessage
 
 
@@ -48,6 +49,48 @@ class ChatUI:
             margin-right: 2rem;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             color: #333;
+        }
+        
+        /* アニメーション効果 - スライドアニメーションを削除 */
+        .ruri-message.thinking {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            opacity: 0.9;
+        }
+        
+        .ruri-message.typing {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+        }
+        
+        .ruri-message {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            padding: 0.8rem;
+            border-radius: 18px 18px 18px 4px;
+            margin: 0.5rem 0;
+            margin-right: 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            color: #333;
+        }
+        
+        .thinking-dots {
+            animation: thinking 1.5s infinite;
+        }
+        
+        @keyframes thinking {
+            0%, 20% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .typing-cursor {
+            animation: blink 1s infinite;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
         }
         
         .message-timestamp {
@@ -98,20 +141,24 @@ class ChatUI:
         """, unsafe_allow_html=True)
     
     def render_chat_history(self, max_display: int = 10, show_latest_highlight: bool = True):
-        """チャット履歴を表示（最新の会話が上に来るよう逆順表示）"""
-        messages = self.chat_manager.get_history()
+        """チャット履歴を表示（将来の拡張ポイント）"""
+        # TODO: LocalStorage / リモートサーバー対応時に有効化
+        # messages = self.chat_manager.get_history()
+        # 
+        # if not messages:
+        #     st.info("💬 まだ会話履歴がありません。ルリにメッセージを送ってみてください！")
+        #     return
+        # 
+        # # 表示する履歴を制限
+        # display_messages = messages[-max_display:] if max_display > 0 else messages
+        # 
+        # # 最新の会話が上に来るよう逆順で表示
+        # for i, message in enumerate(reversed(display_messages)):
+        #     is_latest = (i == 0) and show_latest_highlight
+        #     self._render_single_conversation_turn(message, is_latest)
         
-        if not messages:
-            st.info("💬 まだ会話履歴がありません。ルリにメッセージを送ってみてください！")
-            return
-        
-        # 表示する履歴を制限
-        display_messages = messages[-max_display:] if max_display > 0 else messages
-        
-        # 最新の会話が上に来るよう逆順で表示
-        for i, message in enumerate(reversed(display_messages)):
-            is_latest = (i == 0) and show_latest_highlight
-            self._render_single_conversation_turn(message, is_latest)
+        # 一時的な代替表示
+        st.info("💭 会話履歴機能は開発中です（LocalStorage/リモートサーバー対応予定）", icon="🔧")
     
     def _render_single_conversation_turn(self, message: ChatMessage, is_latest: bool = False):
         """
@@ -162,14 +209,73 @@ class ChatUI:
                 send_button = st.form_submit_button("送信")
             
             if send_button and message.strip():
-                # メッセージ処理
-                with st.spinner('ルリが考え中...'):
-                    chat_message = handle_chat_message(message.strip(), user_level, features)
-                
-                # フォームのclear_on_submit=Trueにより自動的にクリアされる
-                st.rerun()
+                # リアルタイム応答表示でユーザー体験を向上
+                self._handle_message_with_live_feedback(message.strip(), user_level, features)
+                # st.rerun()を削除して、発言後の消失を防止
+                # 履歴は次回のページ更新時に反映される
         
         return None
+
+    def _handle_message_with_live_feedback(self, message: str, user_level: Any, features: Dict[str, bool]):
+        """ライブフィードバック付きメッセージ処理（消失防止版）"""
+        # 1. タイムスタンプを統一
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        
+        # 2. 専用コンテナを作成（履歴とは別管理）
+        live_container = st.container()
+        
+        with live_container:
+            # ルリの吹き出し（上部）
+            ruri_placeholder = st.empty()
+            ruri_placeholder.markdown(f"""
+            <div class="ruri-message">
+                <span class="message-label">🎭 ルリ</span>
+                <div class="message-timestamp">{timestamp}</div>
+                <div class="message-content">💭 考え中...</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # ユーザーメッセージ（下部）
+            st.markdown(f"""
+            <div class="user-message">
+                <span class="message-label">👤 あなた</span>
+                <div class="message-timestamp">{timestamp}</div>
+                <div class="message-content">{message}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # 3. AI応答生成
+        with st.spinner('🤖 ルリが返答を考えています...'):
+            ai_generator = get_ai_generator()
+            ai_response, response_time, model_info = ai_generator.generate_response(
+                message, user_level, features
+            )
+        
+        # 4. シンプルなタイピング表示
+        ruri_placeholder.markdown(f"""
+        <div class="ruri-message">
+            <span class="message-label">🎭 ルリ ✍️</span>
+            <div class="message-timestamp">{timestamp}</div>
+            <div class="message-content">{ai_response[:20]}...</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # 短い待機
+        time.sleep(0.8)
+        
+        # 5. 最終表示
+        ruri_placeholder.markdown(f"""
+        <div class="ruri-message">
+            <span class="message-label">🎭 ルリ</span>
+            <div class="message-timestamp">{timestamp}</div>
+            <div class="message-content">{ai_response}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # 6. 履歴保存（将来の拡張ポイント）
+        # TODO: LocalStorage / リモートサーバー対応
+        # chat_manager = get_chat_manager()
+        # chat_manager.add_message(message, ai_response, response_time, model_info)
     
     def render_chat_controls(self):
         """チャット管理用コントロールを表示"""
@@ -211,15 +317,15 @@ class ChatUI:
         # 区切り線
         st.markdown("---")
         
-        # チャットコンテナ（履歴表示）
-        st.subheader("📜 会話履歴")
-        with st.container():
-            st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-            
-            # 履歴表示
-            self.render_chat_history(max_display)
-            
-            st.markdown('</div>', unsafe_allow_html=True)
+        # チャットコンテナ（将来の拡張ポイント）
+        # st.subheader("📜 会話履歴")
+        # with st.container():
+        #     st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+        #     
+        #     # 履歴表示
+        #     self.render_chat_history(max_display)
+        #     
+        #     st.markdown('</div>', unsafe_allow_html=True)
 
         # コントロール
         st.subheader("🔧 チャット管理")
@@ -248,17 +354,19 @@ def render_compact_chat(user_level: Any, features: Dict[str, bool],
         # 区切り線
         st.markdown("---")
         
-        # 履歴表示（下部）
-        st.markdown("##### 📜 会話履歴")
-        chat_ui.render_chat_history(max_display)
+        # 履歴表示（将来の拡張ポイント）
+        # st.markdown("##### 📜 会話履歴")
+        # chat_ui.render_chat_history(max_display)
         
-        # 管理ボタンは最下部
+        # 一時的なメッセージ
+        st.info("💭 会話履歴機能は開発中です", icon="🔧")
+        
+        # 管理ボタンは最下部（将来の拡張ポイント）
         st.markdown("---")
         col1, col2 = st.columns([1, 1])
         with col1:
-            if st.button("クリア", key=f"compact_clear_{container_key}"):
-                chat_ui.chat_manager.clear_history()
-                st.rerun()
+            # TODO: 履歴機能実装時に有効化
+            st.button("クリア（開発中）", key=f"compact_clear_{container_key}", disabled=True)
         with col2:
             messages = chat_ui.chat_manager.get_history()
             st.caption(f"会話数: {len(messages)}")
