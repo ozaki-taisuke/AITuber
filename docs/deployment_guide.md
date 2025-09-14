@@ -76,7 +76,6 @@
 ```bash
 ENVIRONMENT=production
 DEBUG=False
-BETA_PASSWORD=your-secure-password-here
 ```
 
 ### オプション環境変数

@@ -8,9 +8,6 @@ class ProductionConfig:
     # デバッグモード（本番では False）
     DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
     
-    # セキュリティ設定
-    BETA_PASSWORD = os.getenv('BETA_PASSWORD', 'ruri_beta_2024')
-    
     # AI API設定（環境変数から取得）
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
     OLLAMA_BASE_URL = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
