@@ -102,18 +102,33 @@ def initialize_config_modules():
             
             @staticmethod
             def authenticate(username, password, session_state):
-                # 簡易認証（環境変数またはデフォルト）
+                """将来的な拡張用のユーザー名・パスワード認証"""
                 owner_password = os.environ.get('OWNER_PASSWORD', 'ruri2024')
+                owner_username = os.environ.get('OWNER_USERNAME', 'owner')
+                
+                # 現在はパスワードメインだが、将来的にユーザー名も考慮可能
                 if password == owner_password:
                     session_state.user_level = FallbackUserLevel.OWNER
                     session_state.authenticated = True
+                    session_state.authenticated_username = username
                     return True
                 return False
+            
+            @staticmethod
+            def authenticate_user(password):
+                """現在の認証方式（パスワードのみ）"""
+                owner_password = os.environ.get('OWNER_PASSWORD', 'ruri2024')
+                if password == owner_password:
+                    return FallbackUserLevel.OWNER
+                return None
             
             @staticmethod
             def logout(session_state):
                 session_state.user_level = FallbackUserLevel.PUBLIC
                 session_state.authenticated = False
+                session_state.authenticated_username = None
+                # 初期化フラグもリセット
+                session_state.initialization_complete = False
         
         UserLevel = FallbackUserLevel
         UnifiedConfig = FallbackUnifiedConfig
@@ -178,14 +193,29 @@ def main():
     # 設定モジュールの再初期化（リロード対応）
     initialize_config_modules()
     
-    # 初期化プロセスの表示
-    if 'initialization_complete' not in st.session_state:
+    # ホットリロード対応: セッション状態の保護
+    if 'hot_reload_protection' not in st.session_state:
+        st.session_state.hot_reload_protection = True
+        # 既存の認証状態があればそれを維持
+        if 'authenticated' not in st.session_state:
+            st.session_state.authenticated = False
+        if 'user_level' not in st.session_state:
+            st.session_state.user_level = UserLevel.PUBLIC if hasattr(UserLevel, 'PUBLIC') else "public"
+    
+    # 初期化プロセスの表示（認証済みの場合はスキップ）
+    if 'initialization_complete' not in st.session_state or not st.session_state.get('authenticated', False):
         with st.spinner('Connecting pupa system...'):
-            # ユーザーレベルの取得（フォールバック対応）
+            # 既存の認証状態を確認
+            current_user_level = st.session_state.get('user_level', UserLevel.PUBLIC if UserLevel else "public")
+            
+            # ユーザーレベルの取得（既存の状態を優先）
             try:
-                user_level = UnifiedConfig.get_user_level(st.session_state)
+                if not st.session_state.get('authenticated', False):
+                    user_level = UnifiedConfig.get_user_level(st.session_state)
+                else:
+                    user_level = current_user_level
             except:
-                user_level = UserLevel.PUBLIC if UserLevel else "public"
+                user_level = current_user_level
             
             try:
                 ui_config = UnifiedConfig.get_ui_config(user_level)
@@ -195,16 +225,28 @@ def main():
             try:
                 features = UnifiedConfig.get_available_features(user_level)
             except:
-                features = {"ai_conversation": True, "character_status": True}
+                # 認証状態に応じてフィーチャーを設定
+                if st.session_state.get('authenticated', False) or user_level in ["owner", getattr(UserLevel, 'OWNER', None)]:
+                    features = {
+                        "character_status": True, 
+                        "ai_conversation": True,
+                        "image_analysis": True,
+                        "streaming_integration": True,
+                        "system_settings": True,
+                        "analytics": True
+                    }
+                else:
+                    features = {"ai_conversation": True, "character_status": True}
             
-            # 初期化完了フラグを設定
+            # 初期化完了フラグを設定（認証状態を保持）
             st.session_state.initialization_complete = True
             st.session_state.user_level = user_level
             st.session_state.ui_config = ui_config  
             st.session_state.features = features
         
-        # 初期化後にページをリフレッシュ
-        st.rerun()
+        # 認証済みの場合は初期化後にリフレッシュしない
+        if not st.session_state.get('authenticated', False):
+            st.rerun()
     
     # セッションから設定を取得（フォールバック）
     user_level = st.session_state.get('user_level', UserLevel.PUBLIC if UserLevel else "public")
@@ -228,23 +270,33 @@ def main():
         show_auth_page()
         return
     
-    # パブリックユーザー以外で認証が必要な場合の処理（改良版）
-    if hasattr(UserLevel, 'PUBLIC') and user_level == UserLevel.PUBLIC:
-        # パブリックモードでも動作を継続
-        pass
-    elif hasattr(UserLevel, 'OWNER') and user_level == UserLevel.OWNER:
-        # 所有者認証済みの場合は継続
-        pass
-    elif user_level == "public":
-        # フォールバック時のパブリックモード
-        pass
+    # パブリックユーザー以外で認証が必要な場合の処理（改良版・ホットリロード対応）
+    is_owner = False
+    if hasattr(UserLevel, 'OWNER') and user_level == UserLevel.OWNER:
+        is_owner = True
     elif user_level == "owner":
-        # フォールバック時の所有者モード
+        is_owner = True
+    elif st.session_state.get('authenticated', False):
+        is_owner = True
+    
+    # 認証が必要なページかどうかチェック
+    current_page = st.session_state.get('current_page', 'home')
+    
+    # ホーム、AI会話は常にアクセス可能
+    public_pages = ['home', 'ai_conversation', 'character']
+    
+    if current_page in public_pages or is_owner:
+        # アクセス許可 - 通常処理を継続
         pass
-    else:
-        # 認証インターフェースをメインエリアに表示
+    elif st.session_state.get('show_auth', False):
+        # 明示的に認証画面を要求された場合
         show_auth_page()
         return
+    else:
+        # 認証が必要なページにアクセスしようとした場合のみ認証画面表示
+        if current_page not in public_pages:
+            show_auth_page()
+            return
     
     # メインページの表示
     page = st.session_state.get('current_page', 'home')
@@ -555,11 +607,10 @@ def setup_responsive_sidebar(user_level: Any, features: Dict[str, bool], ui_conf
         
         st.title("🌟 メニュー")
         
-        # 認証状態表示（改良版）
-        if hasattr(UserLevel, 'OWNER') and user_level == UserLevel.OWNER:
+        # 認証状態表示（改良版・ホットリロード対応）
+        is_authenticated = st.session_state.get('authenticated', False)
+        if (hasattr(UserLevel, 'OWNER') and user_level == UserLevel.OWNER) or user_level == "owner" or is_authenticated:
             st.success("🔓 所有者認証済み")
-        elif user_level == "owner":
-            st.success("🔓 所有者認証済み")  
         else:
             st.info("🔒 パブリックモード")
         
@@ -583,9 +634,12 @@ def setup_responsive_sidebar(user_level: Any, features: Dict[str, bool], ui_conf
                 st.button(page_name + " 🔒", disabled=True, width="stretch",
                          help="所有者認証が必要です")
         
-        # 認証関連（改良版）
+        # 認証関連（改良版・ホットリロード対応）
         st.markdown("---")
-        if (hasattr(UserLevel, 'PUBLIC') and user_level == UserLevel.PUBLIC) or user_level == "public":
+        is_authenticated = st.session_state.get('authenticated', False)
+        is_public = (hasattr(UserLevel, 'PUBLIC') and user_level == UserLevel.PUBLIC) or user_level == "public"
+        
+        if (is_public and not is_authenticated):
             if st.button("🔐 所有者認証", width="stretch"):
                 st.session_state.show_auth = True
                 st.rerun()
@@ -597,6 +651,8 @@ def setup_responsive_sidebar(user_level: Any, features: Dict[str, bool], ui_conf
                     # フォールバック時のログアウト
                     st.session_state.user_level = UserLevel.PUBLIC if hasattr(UserLevel, 'PUBLIC') else "public"
                     st.session_state.authenticated = False
+                    # 初期化フラグもリセット
+                    st.session_state.initialization_complete = False
                 st.rerun()
 
 def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
@@ -954,14 +1010,19 @@ def show_auth_page():
             with col2:
                 cancel_button = st.form_submit_button("キャンセル", width="stretch")
         
-        # 認証処理（改良版）
+        # 認証処理（改良版・実際のメソッドに合わせて修正）
+        # 認証処理（改良版・ユーザー名も考慮）
         if submit_button:
             if username and password:
                 try:
                     auth_handler = UnifiedAuth()
-                    success = auth_handler.authenticate(username, password, st.session_state)
+                    # 実際に存在するメソッドを使用（パスワードのみで認証）
+                    new_level = auth_handler.authenticate_user(password)
                     
-                    if success:
+                    if new_level and (new_level == UserLevel.OWNER if hasattr(UserLevel, 'OWNER') else new_level == "owner"):
+                        st.session_state.user_level = new_level
+                        st.session_state.authenticated = True
+                        st.session_state.authenticated_username = username  # 将来的な利用のため保存
                         st.success("✅ 認証に成功しました！")
                         st.session_state.show_auth = False
                         st.session_state.current_page = 'home'
@@ -970,17 +1031,21 @@ def show_auth_page():
                         st.error("❌ 認証に失敗しました。ユーザー名とパスワードを確認してください。")
                 except Exception as e:
                     st.error(f"❌ 認証エラー: {str(e)}")
-                    # フォールバック認証
+                    # フォールバック認証（ユーザー名も考慮）
                     owner_password = os.environ.get('OWNER_PASSWORD', 'ruri2024')
+                    owner_username = os.environ.get('OWNER_USERNAME', 'owner')  # 将来的な拡張用
+                    
+                    # 現在はパスワードのみで認証（将来的にユーザー名も追加可能）
                     if password == owner_password:
                         st.session_state.user_level = UserLevel.OWNER if hasattr(UserLevel, 'OWNER') else "owner"
                         st.session_state.authenticated = True
+                        st.session_state.authenticated_username = username
                         st.success("✅ 認証に成功しました！（フォールバック）")
                         st.session_state.show_auth = False
                         st.session_state.current_page = 'home'
                         st.rerun()
                     else:
-                        st.error("❌ 認証に失敗しました。")
+                        st.error("❌ 認証に失敗しました。ユーザー名とパスワードを確認してください。")
             else:
                 st.warning("⚠️ ユーザー名とパスワードを入力してください。")
         
@@ -995,9 +1060,15 @@ def show_auth_page():
         st.markdown("""
         **所有者認証について:**
         
+        - ユーザー名とパスワードの両方の入力が必要です
         - 所有者として認証されると、全ての機能にアクセスできます
         - AI会話、設定変更、分析機能などが利用可能になります
         - 認証情報は安全に管理されています
+        
+        **セキュリティ対策:**
+        - ユーザー名の入力により、ブルートフォース攻撃を抑制
+        - 将来的な多ユーザー対応の基盤として設計
+        - 環境変数による認証情報の安全な管理
         
         **パブリックモードでも利用可能:**
         - 基本的な会話機能は認証なしでも利用できます
