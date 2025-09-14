@@ -103,8 +103,14 @@ def initialize_config_modules():
             @staticmethod
             def authenticate(username, password, session_state):
                 """将来的な拡張用のユーザー名・パスワード認証"""
-                owner_password = os.environ.get('OWNER_PASSWORD', 'ruri2024')
-                owner_username = os.environ.get('OWNER_USERNAME', 'owner')
+                try:
+                    # 統一設定から認証情報を取得
+                    owner_password = UnifiedConfig.OWNER_PASSWORD if hasattr(UnifiedConfig, 'OWNER_PASSWORD') else os.environ.get('OWNER_PASSWORD', 'ruri2024')
+                    owner_username = UnifiedConfig.OWNER_USERNAME if hasattr(UnifiedConfig, 'OWNER_USERNAME') else os.environ.get('OWNER_USERNAME', 'owner')
+                except:
+                    # フォールバック
+                    owner_password = os.environ.get('OWNER_PASSWORD', 'ruri2024')
+                    owner_username = os.environ.get('OWNER_USERNAME', 'owner')
                 
                 # 現在はパスワードメインだが、将来的にユーザー名も考慮可能
                 if password == owner_password:
@@ -117,7 +123,13 @@ def initialize_config_modules():
             @staticmethod
             def authenticate_user(password):
                 """現在の認証方式（パスワードのみ）"""
-                owner_password = os.environ.get('OWNER_PASSWORD', 'ruri2024')
+                try:
+                    # 統一設定から認証情報を取得
+                    owner_password = UnifiedConfig.OWNER_PASSWORD if hasattr(UnifiedConfig, 'OWNER_PASSWORD') else os.environ.get('OWNER_PASSWORD', 'ruri2024')
+                except:
+                    # フォールバック
+                    owner_password = os.environ.get('OWNER_PASSWORD', 'ruri2024')
+                
                 if password == owner_password:
                     return FallbackUserLevel.OWNER
                 return None
@@ -1031,9 +1043,13 @@ def show_auth_page():
                         st.error("❌ 認証に失敗しました。ユーザー名とパスワードを確認してください。")
                 except Exception as e:
                     st.error(f"❌ 認証エラー: {str(e)}")
-                    # フォールバック認証（ユーザー名も考慮）
-                    owner_password = os.environ.get('OWNER_PASSWORD', 'ruri2024')
-                    owner_username = os.environ.get('OWNER_USERNAME', 'owner')  # 将来的な拡張用
+                    # フォールバック認証（統一設定優先）
+                    try:
+                        owner_password = UnifiedConfig.OWNER_PASSWORD if hasattr(UnifiedConfig, 'OWNER_PASSWORD') else os.environ.get('OWNER_PASSWORD', 'ruri2024')
+                        owner_username = UnifiedConfig.OWNER_USERNAME if hasattr(UnifiedConfig, 'OWNER_USERNAME') else os.environ.get('OWNER_USERNAME', 'owner')
+                    except:
+                        owner_password = os.environ.get('OWNER_PASSWORD', 'ruri2024')
+                        owner_username = os.environ.get('OWNER_USERNAME', 'owner')
                     
                     # 現在はパスワードのみで認証（将来的にユーザー名も追加可能）
                     if password == owner_password:

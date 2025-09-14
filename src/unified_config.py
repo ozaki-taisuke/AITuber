@@ -18,25 +18,28 @@ class UnifiedConfig:
     # 認証設定（環境変数・Streamlit Secrets対応）
     @classmethod
     def get_passwords(cls) -> Dict[str, str]:
-        """認証パスワードを取得（デフォルトは空文字）"""
+        """認証パスワードとユーザー名を取得（デフォルトは空文字）"""
         try:
             # Streamlit secrets から取得を試行
             import streamlit as st
             if hasattr(st, 'secrets'):
                 return {
-                    'OWNER_PASSWORD': st.secrets.get('OWNER_PASSWORD', '')
+                    'OWNER_PASSWORD': st.secrets.get('OWNER_PASSWORD', ''),
+                    'OWNER_USERNAME': st.secrets.get('OWNER_USERNAME', '')
                 }
         except Exception:
             pass
         
         # 環境変数から取得（デフォルトは空文字）
         return {
-            'OWNER_PASSWORD': os.getenv('OWNER_PASSWORD', '')
+            'OWNER_PASSWORD': os.getenv('OWNER_PASSWORD', ''),
+            'OWNER_USERNAME': os.getenv('OWNER_USERNAME', '')
         }
     
     # 認証設定
     _passwords = get_passwords.__func__(None)
     OWNER_PASSWORD = _passwords['OWNER_PASSWORD']
+    OWNER_USERNAME = _passwords['OWNER_USERNAME']
     
     # API設定（セキュア設定管理システム対応）
     @classmethod
