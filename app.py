@@ -3,6 +3,9 @@ import streamlit as st
 import sys
 import os
 
+# 🚀 Streamlit Cloud用 高速起動モード
+CLOUD_MODE = os.environ.get('STREAMLIT_SHARING_MODE') == '1' or 'streamlit.io' in os.environ.get('URL', '')
+
 # プロジェクトパスの設定（本番環境対応強化）
 import sys
 import os
@@ -23,15 +26,16 @@ for path in [project_root, src_path]:
     if path not in sys.path:
         sys.path.insert(0, path)
 
-# Streamlit自動リロード対応: キャッシュクリア
-if 'unified_config' in sys.modules:
-    del sys.modules['unified_config']
-if 'unified_auth' in sys.modules:
-    del sys.modules['unified_auth']
-if 'src.unified_config' in sys.modules:
-    del sys.modules['src.unified_config']
-if 'src.unified_auth' in sys.modules:
-    del sys.modules['src.unified_auth']
+# Streamlit自動リロード対応: キャッシュクリア（CLOUD_MODEでは軽量化）
+if not CLOUD_MODE:
+    if 'unified_config' in sys.modules:
+        del sys.modules['unified_config']
+    if 'unified_auth' in sys.modules:
+        del sys.modules['unified_auth']
+    if 'src.unified_config' in sys.modules:
+        del sys.modules['src.unified_config']
+    if 'src.unified_auth' in sys.modules:
+        del sys.modules['src.unified_auth']
 
 # 統一設定とセキュリティ（エラーハンドリング付き・リロード対応）
 CONFIG_AVAILABLE = False

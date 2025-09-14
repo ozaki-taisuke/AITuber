@@ -1,38 +1,13 @@
-# Streamlit統一環境用 requirements.txt
-# 軽量かつ安定したデプロイメント用設定
-
-# 必須フレームワーク
+# Streamlit Cloud用 最小限依存関係 - 高速デプロイメント対応
 streamlit>=1.28.0
-
-# データ処理 (基本)
 numpy>=1.24.0
 pandas>=2.0.0
-
-# 画像処理
 pillow>=10.0.0
-
-# 軽量画像処理 (OpenCV代替)
-opencv-python-headless>=4.8.0
-
-# 可視化
-plotly>=5.17.0
-
-# HTTP通信
 requests>=2.31.0
 
-# 型ヒント (Python < 3.10 対応)
-typing-extensions>=4.5.0
-
-# セキュリティ強化用パッケージ
-cryptography>=41.0.0
-bcrypt>=4.0.0
-
-# オプション機能 - デプロイ時にエラーが発生する場合はコメントアウト
-# OpenAI API (AI機能用)
-# openai>=0.28.0
-
-# OBS連携 (上級機能)
-# obs-websocket-py>=0.5.3
-
-# Ollama (ローカルAI)
-# ollama>=0.1.0
+# オプション: 必要に応じてコメントアウト解除
+# opencv-python-headless>=4.8.0
+# plotly>=5.17.0
+# typing-extensions>=4.5.0
+# cryptography>=41.0.0
+# bcrypt>=4.0.0
