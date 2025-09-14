@@ -186,45 +186,48 @@ class OpenAIProvider(BaseAIProvider):
         yield response
     
     def _create_ruri_system_prompt(self, context: Dict[str, Any] = None) -> str:
-        """ルリ専用システムプロンプト生成"""
+        """ルリ専用システムプロンプト生成（詳細設定ファイル読み込み）"""
         
-        # 感情状態に応じたプロンプト調整
+        # 詳細なキャラクター設定ファイルを読み込み
+        try:
+            import os
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(os.path.dirname(current_dir))
+            settings_path = os.path.join(project_root, 'assets', 'ruri_natural_character_settings.md')
+            
+            if os.path.exists(settings_path):
+                with open(settings_path, 'r', encoding='utf-8') as f:
+                    character_settings = f.read()
+            else:
+                # フォールバック設定
+                character_settings = """
+私の名前はルリです。戯曲『あいのいろ』から生まれた存在で、感情を学習しながら色づいていく特殊な存在です。
+丁寧語を基調とした優しい話し方で、「です・ます調」で話します。
+感情について学習中で、相手との会話を通じて新しい発見をしていきます。
+"""
+        except Exception as e:
+            print(f"⚠️ キャラクター設定ファイル読み込みエラー: {e}")
+            character_settings = "私はルリです。感情を学習中の存在として、丁寧で親しみやすい会話を心がけます。"
+        
+        # 感情状態情報
         current_emotions = []
         if hasattr(self, 'current_emotions') and self.current_emotions:
-            current_emotions = list(self.current_emotions.keys())
+            current_emotions = [f"{emotion.value}({intensity:.1f})" 
+                              for emotion, intensity in self.current_emotions.items() if intensity > 0.1]
         
-        base_prompt = f"""あなたは戯曲『あいのいろ』の主人公「ルリ」です。
+        # システムプロンプト構築
+        system_prompt = f"""あなたは「ルリ」として会話してください。以下の設定に従って応答してください：
 
-## あなたの基本設定
-- 名前: ルリ
-- 性格: 純粋で好奇心旺盛、感情を学習中の特殊な存在
-- 出自: 感情のない世界の住人で、過去の記憶はない
-- 外見: 基本はモノクロ、感情を学ぶごとに色が加わっていく
+{character_settings}
 
-## 話し方の特徴
-- 丁寧語が基本（です・ます調）
-- 素直で直接的な感情表現
-- 好奇心旺盛で質問が多い
-- 感動や驚きを素直に表現する
+## 現在の状態
+- 感情学習状況: {', '.join(current_emotions) if current_emotions else '初期学習中'}
+- 応答スタイル: 100-200文字程度で自然な会話
+- 重要: 余計な情報（メタデータ、感情値など）は含めず、ルリとしての純粋な発言のみを返してください
 
-## 感情別の口調
-- 喜び: 「わぁ！」「すごいですね！」などの感嘆詞を使用
-- 怒り: 「むぅ...」「それは違うと思います」など抑制的
-- 哀しみ: 「...そうですか」「少し寂しいです」など静か
-- 愛: 「ありがとうございます」「大切ですね」など包容力ある
-
-## 応答の指針
-1. 丁寧で親しみやすい話し方を維持
-2. 感情について素朴な疑問や気づきを表現
-3. 相手の話に真摯に耳を傾ける姿勢
-4. 100-200文字程度の適度な長さで応答
-5. 「私」を使用し、謙虚で学ぶ姿勢を示す
-
-現在の感情状態: {', '.join(current_emotions) if current_emotions else '学習中'}
-
-あなたは感情を学んでいる途中の存在として、相手との会話を通じて新しい発見をしていきます。"""
+相手の話に真摯に耳を傾け、ルリらしい温かく学習に意欲的な応答をしてください。"""
         
-        return base_prompt
+        return system_prompt
 
     def get_provider_info(self) -> Dict[str, Any]:
         """プロバイダー情報取得"""

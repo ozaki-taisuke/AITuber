@@ -116,15 +116,45 @@ class RuriCharacter:
         """キャラクター設定をプロバイダーに適用"""
         if self.ai_provider and hasattr(self.ai_provider, 'set_character_context'):
             try:
-                context = json.dumps(self.character_profile, ensure_ascii=False)
-                self.ai_provider.set_character_context(context)
-                print("✅ キャラクター設定をAIプロバイダーに適用しました")
+                # 詳細設定を含む包括的なコンテキストを作成
+                enhanced_context = {
+                    "basic_info": {
+                        "name": self.character_profile.get("name", "ルリ"),
+                        "origin": self.character_profile.get("origin", "戯曲『あいのいろ』"),
+                        "personality": self.character_profile.get("personality", "純粋で好奇心旺盛"),
+                        "speaking_style": self.character_profile.get("speaking_style", "丁寧で親しみやすい")
+                    },
+                    "detailed_settings": self.character_profile.get("detailed_settings", ""),
+                    "emotion_styles": self.character_profile.get("emotion_speaking_styles", {}),
+                    "content_ideas": self.character_profile.get("content_ideas", []),
+                    "current_state": {
+                        "color_stage": self.character_profile.get("color_stage", "monochrome"),
+                        "learned_emotions": self.character_profile.get("learned_emotions", [])
+                    }
+                }
+                
+                context_json = json.dumps(enhanced_context, ensure_ascii=False, indent=2)
+                self.ai_provider.set_character_context(context_json)
+                print("✅ 詳細キャラクター設定をAIプロバイダーに適用しました")
+                print(f"📋 設定項目数: {len(enhanced_context)}")
             except Exception as e:
                 print(f"⚠️ キャラクター設定の適用に失敗: {e}")
+                # フォールバック: 基本設定のみ適用
+                try:
+                    basic_context = json.dumps(self.character_profile, ensure_ascii=False)
+                    self.ai_provider.set_character_context(basic_context)
+                    print("🔄 基本設定のみ適用しました")
+                except Exception as fallback_error:
+                    print(f"❌ 基本設定の適用も失敗: {fallback_error}")
     
     def _load_character_profile(self, profile_path: str = None) -> Dict[str, Any]:
-        """キャラクター設定の安全な読み込み"""
-        # デフォルトプロファイル（フォールバック用）
+        """新しい2ファイル構成での設定読み込み"""
+        
+        # 基本設定（JSON）の読み込み
+        config_path = os.path.join("assets", "ruri_config.json")
+        character_path = os.path.join("assets", "ruri_character.md")
+        
+        # デフォルト設定
         default_profile = {
             "name": "ルリ",
             "origin": "戯曲『あいのいろ』", 
@@ -135,52 +165,49 @@ class RuriCharacter:
             "background": "感情を学んで色づいていく特殊な体質を持つ"
         }
         
-        # 設定ファイルパスの決定
-        if profile_path is None:
-            profile_path = os.path.join("assets", "ruri_character_profile.md")
+        profile = default_profile.copy()
         
-        try:
-            # 設定ファイルの読み込み試行
-            if os.path.exists(profile_path):
-                print(f"📂 キャラクター設定を読み込み中: {profile_path}")
-                return self._parse_character_profile_file(profile_path, default_profile)
-            else:
-                print(f"⚠️ 設定ファイルが見つかりません: {profile_path}")
-                print("📋 デフォルト設定を使用します")
-                return default_profile
-                
-        except Exception as e:
-            print(f"❌ キャラクター設定読み込みエラー: {e}")
-            print("📋 デフォルト設定にフォールバックします")
-            return default_profile
-    
-    def _parse_character_profile_file(self, profile_path: str, default_profile: Dict[str, Any]) -> Dict[str, Any]:
-        """設定ファイルの解析"""
-        try:
-            with open(profile_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
-            # 簡単なMarkdown解析（実装可能に応じて拡張）
-            profile = default_profile.copy()
-            
-            # ここで実際の設定ファイル解析を行う
-            # 現在はデフォルト設定を返す
-            print("✅ キャラクター設定を正常に読み込みました")
-            return profile
-            
-        except Exception as e:
-            print(f"❌ 設定ファイル解析エラー: {e}")
-            return default_profile
+        # 1. プログラム用設定（JSON）の読み込み
+        if os.path.exists(config_path):
             try:
-                with open(profile_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    # マークダウンから基本情報を抽出（簡易実装）
-                    return default_profile
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config_data = json.load(f)
+                    profile["config"] = config_data
+                    profile["emotions"] = config_data.get("emotions", {})
+                    profile["response_patterns"] = config_data.get("response_patterns", {})
+                    print(f"✅ プログラム用設定を読み込み: {config_path}")
             except Exception as e:
-                print(f"⚠️  プロフィール読み込みエラー: {e}")
+                print(f"⚠️ プログラム用設定読み込みエラー: {e}")
         
-        return default_profile
-    
+        # 2. 自然言語設定（Markdown）の読み込み
+        if os.path.exists(character_path):
+            try:
+                with open(character_path, 'r', encoding='utf-8') as f:
+                    character_content = f.read()
+                    profile["character_description"] = character_content
+                    profile["natural_settings"] = character_content
+                    print(f"✅ 自然言語設定を読み込み: {character_path}")
+            except Exception as e:
+                print(f"⚠️ 自然言語設定読み込みエラー: {e}")
+        
+        # カスタムパスが指定された場合の処理
+        if profile_path and os.path.exists(profile_path):
+            try:
+                if profile_path.endswith('.json'):
+                    with open(profile_path, 'r', encoding='utf-8') as f:
+                        custom_config = json.load(f)
+                        profile["config"].update(custom_config)
+                elif profile_path.endswith('.md'):
+                    with open(profile_path, 'r', encoding='utf-8') as f:
+                        custom_content = f.read()
+                        profile["character_description"] = custom_content
+                print(f"✅ カスタム設定を適用: {profile_path}")
+            except Exception as e:
+                print(f"⚠️ カスタム設定エラー: {e}")
+        
+        print("✅ 新しい2ファイル構成での設定読み込み完了")
+        return profile
+
     def generate_response(self, message: str, context: Dict[str, Any] = None) -> str:
         """メッセージに対する応答を生成"""
         

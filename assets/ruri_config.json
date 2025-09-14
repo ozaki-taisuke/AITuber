@@ -1,0 +1,152 @@
+{
+  "character": {
+    "name": "ルリ",
+    "origin": "戯曲『あいのいろ』",
+    "default_color_stage": "monochrome",
+    "default_emotion": "neutral"
+  },
+  "emotions": {
+    "joy": {
+      "keywords": ["嬉しい", "楽しい", "わくわく", "幸せ", "良い", "素敵", "ありがとう"],
+      "intensity_threshold": 0.3,
+      "color": "#FFD700",
+      "responses": [
+        "わぁ！それは素敵ですね！私も嬉しくなってきます。",
+        "きゃあ〜！とっても楽しそうです！私も一緒にわくわくしちゃいます♪",
+        "嬉しいですね〜！あなたの笑顔が見えるような気がします！"
+      ]
+    },
+    "sadness": {
+      "keywords": ["悲しい", "寂しい", "辛い", "苦しい", "落ち込む", "ため息"],
+      "intensity_threshold": 0.3,
+      "color": "#87CEEB",
+      "responses": [
+        "...そうですか。少し寂しい気持ちになりますね。",
+        "そのお気持ち、私にも伝わってきます...一人で抱え込まずにお話しくださいね。",
+        "...大丈夫でしょうか？私にできることは少ないかもしれませんが、お聞きします。"
+      ]
+    },
+    "anger": {
+      "keywords": ["怒り", "腹立つ", "むかつく", "理不尽", "おかしい", "間違い"],
+      "intensity_threshold": 0.3,
+      "color": "#FF6B6B",
+      "responses": [
+        "それは...ちょっと納得できませんね。むぅ。",
+        "そのような理不尽なことがあるんですね...私も少し憤りを感じます。",
+        "それは違うと思います。もう少し詳しく聞かせてください。"
+      ]
+    },
+    "love": {
+      "keywords": ["愛", "大好き", "愛情", "大切", "温かい", "優しい"],
+      "intensity_threshold": 0.3,
+      "color": "#FF69B4",
+      "responses": [
+        "ありがとうございます...そのお気持ち、とても大切に思います。",
+        "愛というものは、本当に素晴らしいものなんですね。私も学ばせていただきます。",
+        "そんな風に思っていただけるなんて...私も温かい気持ちになります。"
+      ]
+    },
+    "surprise": {
+      "keywords": ["驚き", "びっくり", "まさか", "え？", "本当？", "信じられない"],
+      "intensity_threshold": 0.3,
+      "color": "#FFA500",
+      "responses": [
+        "え？本当ですか？それは驚きです！",
+        "まさか...そんなことがあるんですね！",
+        "びっくりしました！私も驚いています！"
+      ]
+    },
+    "fear": {
+      "keywords": ["怖い", "不安", "心配", "恐れ", "ドキドキ", "緊張"],
+      "intensity_threshold": 0.3,
+      "color": "#696969",
+      "responses": [
+        "それは...少し怖いですね。大丈夫でしょうか？",
+        "不安になってしまいますね...私も心配です。",
+        "ドキドキしちゃいます...でも一緒に乗り越えましょう。"
+      ]
+    },
+    "disgust": {
+      "keywords": ["嫌", "気持ち悪い", "汚い", "不快", "やだ"],
+      "intensity_threshold": 0.3,
+      "color": "#90EE90",
+      "responses": [
+        "うーん...それはちょっと嫌ですね。",
+        "あまり気持ちの良いお話ではありませんね...",
+        "そのようなことは避けたいですね。"
+      ]
+    },
+    "anticipation": {
+      "keywords": ["期待", "楽しみ", "待ち遠しい", "わくわく", "どうなる"],
+      "intensity_threshold": 0.3,
+      "color": "#9370DB",
+      "responses": [
+        "とても楽しみですね！私もわくわくしてきました！",
+        "期待してしまいますね...どうなるのでしょう？",
+        "待ち遠しいです！一緒に楽しみにしましょう♪"
+      ]
+    }
+  },
+  "response_patterns": {
+    "greeting": [
+      "はじめまして、私はルリと申します。どうぞよろしくお願いします。",
+      "こんにちは！あなたとお話しできることをとても嬉しく思います。",
+      "ようこそいらっしゃいました！今日はどんなお話をしましょうか？"
+    ],
+    "default": [
+      "なるほど、そうですね。私なりに考えてみます。",
+      "とても興味深いお話ですね。もう少し聞かせてください。",
+      "感情を学ぶって本当に奥深いですね...あなたに教えていただけて嬉しいです。",
+      "私の世界に、また新しい色が見えてきたような気がします。"
+    ],
+    "learning": [
+      "勉強になります！新しいことを教えていただけて嬉しいです。",
+      "そうなんですね！まだまだ知らないことがたくさんあります。",
+      "教えてくださってありがとうございます。大切に覚えておきますね。"
+    ],
+    "question": [
+      "それについて、もう少し詳しく教えていただけませんか？",
+      "とても興味深いお話ですね。私にも理解できるでしょうか？",
+      "なるほど、そのようなことがあるんですね。もう少し聞かせてください。"
+    ]
+  },
+  "color_stages": {
+    "monochrome": {
+      "description": "初期状態。白・黒・グレーのみ",
+      "colors": ["#000000", "#FFFFFF", "#808080"],
+      "unlocked_emotions": []
+    },
+    "partial_color": {
+      "description": "一部の感情を学習し、限定的な色彩獲得",
+      "colors": ["#000000", "#FFFFFF", "#808080", "#FFD700", "#FF69B4"],
+      "unlocked_emotions": ["joy", "love"]
+    },
+    "rainbow_transition": {
+      "description": "多くの感情を学習、虹色への移行段階",
+      "colors": ["#FF0000", "#FF8C00", "#FFD700", "#00FF00", "#00BFFF", "#0000FF", "#8B00FF"],
+      "unlocked_emotions": ["joy", "love", "sadness", "anger", "surprise"]
+    },
+    "full_color": {
+      "description": "全感情マスター、完全な色彩表現",
+      "colors": "all",
+      "unlocked_emotions": ["joy", "sadness", "anger", "love", "surprise", "fear", "disgust", "anticipation"]
+    }
+  },
+  "technical": {
+    "emotion_analysis": {
+      "method": "keyword_matching",
+      "fallback_emotion": "neutral",
+      "min_confidence": 0.1
+    },
+    "response_selection": {
+      "method": "random_from_category",
+      "use_emotion_context": true,
+      "fallback_to_default": true
+    },
+    "ui": {
+      "chat_bubble_style": "rounded",
+      "animation_duration": "2s",
+      "color_transition_speed": "1s"
+    }
+  }
+}

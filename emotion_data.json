@@ -1,10 +1,13 @@
 {
   "learned_emotions": {
-    "joy": 0.3,
-    "sadness": 0.2
+    "joy": 1.0,
+    "sadness": 1.0,
+    "anger": 0.7000000000000001,
+    "anticipation": 0.1,
+    "love": 0.6
   },
-  "color_stage": "partial_color",
-  "total_interactions": 2,
+  "color_stage": "rainbow_transition",
+  "total_interactions": 33,
   "emotion_history": [
     {
       "timestamp": "2025-09-14T23:03:31.062181",
@@ -17,7 +20,193 @@
       "emotion": "sadness",
       "intensity": 0.2,
       "learned_level": 0.2
+    },
+    {
+      "timestamp": "2025-09-14T23:14:38.840129",
+      "emotion": "joy",
+      "intensity": 0.2,
+      "learned_level": 0.5
+    },
+    {
+      "timestamp": "2025-09-14T23:23:07.281491",
+      "emotion": "joy",
+      "intensity": 0.2,
+      "learned_level": 0.7
+    },
+    {
+      "timestamp": "2025-09-14T23:23:13.900596",
+      "emotion": "anger",
+      "intensity": 0.2,
+      "learned_level": 0.2
+    },
+    {
+      "timestamp": "2025-09-14T23:23:16.380391",
+      "emotion": "anger",
+      "intensity": 0.1,
+      "learned_level": 0.30000000000000004
+    },
+    {
+      "timestamp": "2025-09-14T23:23:30.200883",
+      "emotion": "sadness",
+      "intensity": 0.2,
+      "learned_level": 0.4
+    },
+    {
+      "timestamp": "2025-09-14T23:23:32.345507",
+      "emotion": "sadness",
+      "intensity": 0.1,
+      "learned_level": 0.5
+    },
+    {
+      "timestamp": "2025-09-14T23:27:46.366146",
+      "emotion": "joy",
+      "intensity": 0.1,
+      "learned_level": 0.7999999999999999
+    },
+    {
+      "timestamp": "2025-09-14T23:28:26.561289",
+      "emotion": "anticipation",
+      "intensity": 0.1,
+      "learned_level": 0.1
+    },
+    {
+      "timestamp": "2025-09-14T23:31:00.366399",
+      "emotion": "joy",
+      "intensity": 0.1,
+      "learned_level": 0.8999999999999999
+    },
+    {
+      "timestamp": "2025-09-14T23:31:00.367400",
+      "emotion": "love",
+      "intensity": 0.1,
+      "learned_level": 0.1
+    },
+    {
+      "timestamp": "2025-09-14T23:31:25.136607",
+      "emotion": "sadness",
+      "intensity": 0.2,
+      "learned_level": 0.7
+    },
+    {
+      "timestamp": "2025-09-14T23:31:26.707045",
+      "emotion": "sadness",
+      "intensity": 0.1,
+      "learned_level": 0.7999999999999999
+    },
+    {
+      "timestamp": "2025-09-14T23:31:51.796963",
+      "emotion": "joy",
+      "intensity": 0.1,
+      "learned_level": 0.9999999999999999
+    },
+    {
+      "timestamp": "2025-09-14T23:31:51.797962",
+      "emotion": "anger",
+      "intensity": 0.1,
+      "learned_level": 0.4
+    },
+    {
+      "timestamp": "2025-09-14T23:31:51.798962",
+      "emotion": "love",
+      "intensity": 0.30000000000000004,
+      "learned_level": 0.4
+    },
+    {
+      "timestamp": "2025-09-14T23:34:39.927946",
+      "emotion": "joy",
+      "intensity": 0.1,
+      "learned_level": 1.0
+    },
+    {
+      "timestamp": "2025-09-14T23:34:52.678411",
+      "emotion": "joy",
+      "intensity": 0.2,
+      "learned_level": 1.0
+    },
+    {
+      "timestamp": "2025-09-14T23:34:54.526385",
+      "emotion": "joy",
+      "intensity": 0.1,
+      "learned_level": 1.0
+    },
+    {
+      "timestamp": "2025-09-14T23:35:01.374502",
+      "emotion": "joy",
+      "intensity": 0.1,
+      "learned_level": 1.0
+    },
+    {
+      "timestamp": "2025-09-14T23:35:17.749501",
+      "emotion": "anger",
+      "intensity": 0.2,
+      "learned_level": 0.6000000000000001
+    },
+    {
+      "timestamp": "2025-09-14T23:35:19.447871",
+      "emotion": "anger",
+      "intensity": 0.1,
+      "learned_level": 0.7000000000000001
+    },
+    {
+      "timestamp": "2025-09-14T23:38:20.235298",
+      "emotion": "joy",
+      "intensity": 0.2,
+      "learned_level": 1.0
+    },
+    {
+      "timestamp": "2025-09-14T23:39:17.524667",
+      "emotion": "joy",
+      "intensity": 0.1,
+      "learned_level": 1.0
+    },
+    {
+      "timestamp": "2025-09-14T23:39:17.525667",
+      "emotion": "love",
+      "intensity": 0.1,
+      "learned_level": 0.5
+    },
+    {
+      "timestamp": "2025-09-14T23:40:06.266730",
+      "emotion": "joy",
+      "intensity": 0.1,
+      "learned_level": 1.0
+    },
+    {
+      "timestamp": "2025-09-14T23:40:16.164658",
+      "emotion": "love",
+      "intensity": 0.1,
+      "learned_level": 0.6
+    },
+    {
+      "timestamp": "2025-09-14T23:40:23.994113",
+      "emotion": "sadness",
+      "intensity": 0.2,
+      "learned_level": 1.0
+    },
+    {
+      "timestamp": "2025-09-14T23:40:25.792414",
+      "emotion": "sadness",
+      "intensity": 0.1,
+      "learned_level": 1.0
+    },
+    {
+      "timestamp": "2025-09-14T23:41:14.066565",
+      "emotion": "joy",
+      "intensity": 0.1,
+      "learned_level": 1.0
+    },
+    {
+      "timestamp": "2025-09-14T23:41:36.818816",
+      "emotion": "joy",
+      "intensity": 0.1,
+      "learned_level": 1.0
+    },
+    {
+      "timestamp": "2025-09-14T23:50:51.719354",
+      "emotion": "joy",
+      "intensity": 0.2,
+      "learned_level": 1.0
     }
   ],
-  "last_updated": "2025-09-14T23:03:31.062181"
+  "last_updated": "2025-09-14T23:50:51.719354"
 }
