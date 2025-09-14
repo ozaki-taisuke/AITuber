@@ -10,6 +10,6 @@ REM 少し待つ
 timeout /t 2 /nobreak >nul
 
 REM 固定ポートで起動
-python -m streamlit run webui\app.py --server.port 8501 --server.address localhost --browser.gatherUsageStats false
+python -m streamlit run app.py --server.port 8501 --server.address localhost --browser.gatherUsageStats false
 
 pause

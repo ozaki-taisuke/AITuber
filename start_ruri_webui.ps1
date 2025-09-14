@@ -10,4 +10,4 @@ Start-Sleep -Seconds 2
 
 # 固定ポートで起動
 Write-Host "Streamlitを固定ポート8501で起動中..." -ForegroundColor Green
-python -m streamlit run webui\app.py --server.port 8501 --server.address localhost --browser.gatherUsageStats false
+python -m streamlit run app.py --server.port 8501 --server.address localhost --browser.gatherUsageStats false

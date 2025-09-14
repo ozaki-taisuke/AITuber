@@ -5,11 +5,11 @@ import os
 from typing import Dict
 
 # プロジェクトパスの設定
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+project_root = os.path.dirname(os.path.abspath(__file__))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
 # 統一設定とセキュリティ
 from src.unified_config import UnifiedConfig, UserLevel
@@ -55,6 +55,14 @@ def main():
     # 認証状態の確認（改良版）
     auth_handler = UnifiedAuth()
     
+    # サイドバーメニュー（レスポンシブ対応）
+    setup_responsive_sidebar(user_level, features, ui_config)
+    
+    # 認証ダイアログの表示チェック（メインエリアに表示）
+    if st.session_state.get('show_auth', False):
+        show_auth_page()
+        return
+    
     # パブリックユーザー以外で認証が必要な場合の処理
     if user_level == UserLevel.PUBLIC:
         # パブリックモードでも動作を継続
@@ -63,12 +71,9 @@ def main():
         # 所有者認証済みの場合は継続
         pass
     else:
-        # 認証インターフェースを表示
-        auth_handler.show_auth_interface()
+        # 認証インターフェースをメインエリアに表示
+        show_auth_page()
         return
-    
-    # サイドバーメニュー（レスポンシブ対応）
-    setup_responsive_sidebar(user_level, features, ui_config)
     
     # メインページの表示
     page = st.session_state.get('current_page', 'home')
@@ -91,120 +96,194 @@ def main():
         st.error(f"ページ '{page}' は利用できません")
 
 def setup_responsive_design():
-    """レスポンシブデザインの設定"""
+    """レスポンシブデザインの設定（アクセシビリティ強化版）"""
     
-    # モバイル検出（簡易版）
-    if 'mobile_view' not in st.session_state:
-        st.session_state.mobile_view = False
-    
-    # レスポンシブ対応のCSS
+    # アクセシビリティ重視のレスポンシブCSS
     st.markdown("""
     <style>
-    /* 基本レスポンシブ設定 */
+    /* 基本レスポンシブ設定 - 戯曲『あいのいろ』の世界観 */
     .main > div {
         padding-top: 2rem;
     }
     
-    /* チャット関連スタイル */
+    /* 会話関連スタイル - 明るく視認性重視 */
     .chat-container {
         max-width: 100%;
-        padding: 1rem;
-        background: #f8f9fa;
-        border-radius: 0.5rem;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        border-radius: 1rem;
         margin: 1rem 0;
+        border: 2px solid #cbd5e1;
     }
     
     .chat-message {
         background: #ffffff;
-        padding: 0.75rem;
-        margin: 0.5rem 0;
-        border-radius: 0.5rem;
-        border-left: 4px solid #4a90e2;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 1rem;
+        margin: 0.75rem 0;
+        border-radius: 0.75rem;
+        border-left: 5px solid #6366f1;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+        transition: all 0.2s ease;
+    }
+    
+    .chat-message:hover {
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.25);
+        transform: translateY(-1px);
     }
     
     .chat-input-section {
-        background: #ffffff;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin-top: 1rem;
+        background: transparent;
+        padding: 1rem 0;
+        border-radius: 0;
+        margin-top: 0.5rem;
+        border: none;
+        box-shadow: none;
     }
     
-    /* 画像レスポンシブ */
+    /* 画像レスポンシブ - 感情学習をイメージした枠（コンパクト版） */
     .ruri-image-container {
         display: flex;
         justify-content: center;
         margin: 1rem 0;
+        position: relative;
     }
     
     .ruri-image-container img {
         max-width: 100%;
+        max-height: 300px;
         height: auto;
-        border-radius: 1rem;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        border-radius: 1.5rem;
+        box-shadow: 0 8px 32px rgba(99, 102, 241, 0.2);
+        border: 3px solid #e2e8f0;
+        transition: all 0.3s ease;
+        object-fit: contain;
+    }
+    
+    .ruri-image-container img:hover {
+        transform: scale(1.02);
+        box-shadow: 0 12px 48px rgba(99, 102, 241, 0.3);
+    }
+    
+    /* カラーパレット - 戯曲『あいのいろ』テーマ */
+    :root {
+        --primary-color: #6366f1;      /* 感情学習の青 */
+        --secondary-color: #8b5cf6;    /* 成長の紫 */
+        --accent-color: #06b6d4;       /* 変化の水色 */
+        --success-color: #10b981;      /* 学習完了の緑 */
+        --text-primary: #1e293b;       /* 高コントラスト黒 */
+        --text-secondary: #475569;     /* 読みやすいグレー */
+        --background-light: #f8fafc;   /* 明るい背景 */
+        --border-light: #e2e8f0;       /* 優しいボーダー */
     }
     
     /* モバイル対応 */
     @media (max-width: 768px) {
         .chat-container {
-            padding: 0.5rem;
-            margin: 0.5rem 0;
+            padding: 1rem;
+            margin: 0.75rem 0;
+            border-radius: 0.75rem;
         }
         
         .chat-message {
-            padding: 0.5rem;
-            font-size: 0.9rem;
+            padding: 0.75rem;
+            font-size: 0.95rem;
+            margin: 0.5rem 0;
         }
         
         .chat-input-section {
-            padding: 0.75rem;
+            padding: 0.5rem 0;
+            border-radius: 0;
         }
         
         .ruri-image-container img {
-            max-width: 90%;
+            max-width: 80%;
+            max-height: 200px;
+            border-radius: 1rem;
         }
         
         .main > div {
             padding-top: 1rem;
         }
+        
+        /* モバイルでのボタン配置 */
+        .stColumns > div {
+            min-width: 0 !important;
+            flex: 1 !important;
+        }
+        
+        .stButton > button {
+            width: 100% !important;
+            font-size: 0.9rem !important;
+            padding: 0.5rem !important;
+        }
+        
+        /* モバイルでのカラム幅調整 */
+        div[data-testid="column"]:nth-child(1) {
+            flex: 2 !important;
+        }
+        
+        div[data-testid="column"]:nth-child(2),
+        div[data-testid="column"]:nth-child(3) {
+            flex: 1 !important;
+        }
     }
     
-    /* ダークモード対応 */
-    .dark-mode .chat-message {
-        background: #2d3748;
-        color: #e2e8f0;
+    /* タブレット対応 */
+    @media (min-width: 769px) and (max-width: 1024px) {
+        .chat-container {
+            padding: 1.25rem;
+        }
+        
+        .ruri-image-container img {
+            max-width: 85%;
+        }
     }
     
-    .dark-mode .chat-container {
-        background: #1a202c;
+    /* 高コントラストアクセシビリティ */
+    @media (prefers-contrast: high) {
+        .chat-message {
+            border-left-width: 6px;
+            border-color: #000000;
+        }
+        
+        .chat-container {
+            border-color: #475569;
+            border-width: 3px;
+        }
+    }
+    
+    /* 視覚的な強調 */
+    .highlight-text {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+    
+    .status-indicator {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .status-active {
+        background-color: #dcfce7;
+        color: #166534;
+        border: 1px solid #22c55e;
+    }
+    
+    .status-limited {
+        background-color: #fef3c7;
+        color: #92400e;
+        border: 1px solid #f59e0b;
     }
     </style>
     """, unsafe_allow_html=True)
 
 def setup_responsive_sidebar(user_level: UserLevel, features: Dict[str, bool], ui_config: Dict):
-    """レスポンシブ対応サイドバーの設定"""
+    """レスポンシブ対応サイドバーの設定（シンプル版）"""
     
     with st.sidebar:
-        # ダークモード切り替え（セッション状態を適切に処理）
-        dark_mode = st.checkbox("🌙 ダークモード", key="dark_mode")
-        if 'dark_mode_active' not in st.session_state:
-            st.session_state.dark_mode_active = False
-        
-        if dark_mode:
-            st.session_state.dark_mode_active = True
-            st.markdown('<div class="dark-mode">', unsafe_allow_html=True)
-        else:
-            st.session_state.dark_mode_active = False
-        
-        # モバイルビュー切り替え（デバッグ用）
-        mobile_view = st.checkbox("📱 モバイルビュー", key="mobile_debug")
-        if 'mobile_view_active' not in st.session_state:
-            st.session_state.mobile_view_active = False
-        
-        if mobile_view:
-            st.session_state.mobile_view_active = True
-        else:
-            st.session_state.mobile_view_active = False
         
         st.title("🌟 メニュー")
         
@@ -227,23 +306,23 @@ def setup_responsive_sidebar(user_level: UserLevel, features: Dict[str, bool], u
         
         for page_key, page_name, enabled in menu_items:
             if enabled:
-                if st.button(page_name, key=f"nav_{page_key}", use_container_width=True):
+                if st.button(page_name, key=f"nav_{page_key}", width="stretch"):
                     st.session_state.current_page = page_key
-                    st.experimental_rerun()
+                    st.rerun()
             else:
-                st.button(page_name + " 🔒", disabled=True, use_container_width=True,
+                st.button(page_name + " 🔒", disabled=True, width="stretch",
                          help="所有者認証が必要です")
         
         # 認証関連
         st.markdown("---")
         if user_level == UserLevel.PUBLIC:
-            if st.button("🔐 所有者認証", use_container_width=True):
+            if st.button("🔐 所有者認証", width="stretch"):
                 st.session_state.show_auth = True
-                st.experimental_rerun()
+                st.rerun()
         else:
-            if st.button("🚪 ログアウト", use_container_width=True):
+            if st.button("🚪 ログアウト", width="stretch"):
                 UnifiedAuth().logout(st.session_state)
-                st.experimental_rerun()
+                st.rerun()
 
 def show_home_page(user_level: UserLevel, features: Dict[str, bool], ui_config: Dict):
     """ホームページ - レスポンシブ対応チャット機能付き"""
@@ -256,12 +335,12 @@ def show_home_page(user_level: UserLevel, features: Dict[str, bool], ui_config: 
     </div>
     """, unsafe_allow_html=True)
     
-    # レスポンシブ対応のルリ画像表示
+    # レスポンシブ対応のルリ画像表示（コンパクト版）
     image_path = os.path.join(project_root, "assets", "ruri_imageboard.png")
     if os.path.exists(image_path):
-        col_left, col_center, col_right = st.columns([0.5, 3, 0.5])
+        col_left, col_center, col_right = st.columns([1, 2, 1])
         with col_center:
-            st.image(image_path, caption="🎭 ルリちゃん", use_container_width=True)
+            st.image(image_path, width="stretch")
     else:
         st.info("🎭 ルリの画像を読み込み中...")
     
@@ -273,131 +352,91 @@ def show_home_page(user_level: UserLevel, features: Dict[str, bool], ui_config: 
     if 'chat_input' not in st.session_state:
         st.session_state.chat_input = ""
     
-    # モバイル対応のチャット機能
-    st.markdown("---")
+    # 会話エリア（コンパクト設計）
     
-    if user_level == UserLevel.PUBLIC:
-        st.markdown("### 💬 ルリとチャット")
-        st.info("🔒 フル機能を利用するには所有者認証が必要です")
+    # 全ユーザーでAI会話機能を利用可能に変更
+    st.markdown("### 💬 ルリと話す")
+    
+    # APIキー確認（非表示）
+    has_api_key = False
+    try:
+        api_keys = UnifiedConfig.get_api_keys()
+        has_api_key = bool(api_keys.get('OPENAI_API_KEY'))
+    except Exception:
+        pass
+    
+    if not has_api_key and user_level == UserLevel.PUBLIC:
+        st.markdown('<span class="status-indicator status-limited">🤖 基本応答モードで動作中</span>', unsafe_allow_html=True)
+    elif user_level == UserLevel.OWNER:
+        st.markdown('<span class="status-indicator status-active">✅ フル機能モードで動作中</span>', unsafe_allow_html=True)
+    
+    # チャット履歴の表示（全ユーザー対応）
+    if st.session_state.chat_history:
+        st.markdown("#### 📝 会話履歴")
         
-        # パブリック用の簡易チャット（レスポンシブ対応）
+        # 履歴表示数を固定（5件）- レスポンシブはCSSで制御
+        display_count = 5
+        
+        for i, (timestamp, user_msg, ruri_msg) in enumerate(st.session_state.chat_history[-display_count:]):
+            st.markdown(f"""
+            <div class="chat-message">
+                <small style="color: var(--text-secondary); font-weight: 500;">{timestamp}</small><br>
+                <strong style="color: var(--text-primary);">あなた:</strong> {user_msg}<br>
+                <strong class="highlight-text">ルリ:</strong> {ruri_msg}
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # チャット入力（全ユーザー対応）
+    with st.form("chat_form", clear_on_submit=True):
         chat_input = st.text_input(
-            "メッセージを入力してください...",
-            placeholder="こんにちは、ルリちゃん！",
-            disabled=True,
-            help="所有者認証後にチャット機能が利用できます"
+            "ルリにメッセージを送信:",
+            placeholder="どうしたの。",
+            key="chat_input_field"
         )
-        st.caption("👆 認証後にメッセージ送信が可能になります")
         
-    else:
-        st.markdown("### 💬 ルリとチャット")
+        # レスポンシブ対応：CSS Media Queryで自動判定
+        st.markdown("""
+        <style>
+        .mobile-layout { display: none; }
+        .desktop-layout { display: block; }
         
-        # チャット履歴の表示（レスポンシブ対応）
-        if st.session_state.chat_history:
-            st.markdown("#### 📝 会話履歴")
-            
-            # 履歴表示数をモバイルに最適化
-            display_count = 3 if st.session_state.get('mobile_view_active', False) else 5
-            
-            for i, (timestamp, user_msg, ruri_msg) in enumerate(st.session_state.chat_history[-display_count:]):
-                st.markdown(f"""
-                <div class="chat-message">
-                    <small style="color: #666;">{timestamp}</small><br>
-                    <strong>あなた:</strong> {user_msg}<br>
-                    <strong style="color: #4a90e2;">ルリ:</strong> {ruri_msg}
-                </div>
-                """, unsafe_allow_html=True)
+        @media (max-width: 768px) {
+            .mobile-layout { display: block; }
+            .desktop-layout { display: none; }
+        }
+        </style>
+        """, unsafe_allow_html=True)
         
-        # チャット入力（レスポンシブ対応）
-        st.markdown('<div class="chat-input-section">', unsafe_allow_html=True)
-        with st.form("chat_form", clear_on_submit=True):
-            chat_input = st.text_input(
-                "ルリにメッセージを送信:",
-                placeholder="今日はどんな気分？感情を教えて！",
-                key="chat_input_field"
-            )
-            
-            # モバイル対応：ボタン配置を最適化
-            if st.session_state.get('mobile_view_active', False):
-                # モバイル：縦並び
-                submit_button = st.form_submit_button("💌 送信", use_container_width=True)
-                col1, col2 = st.columns(2)
-                with col1:
-                    clear_history = st.form_submit_button("🗑️ 履歴削除", use_container_width=True)
-                with col2:
-                    export_chat = st.form_submit_button("📄 エクスポート", use_container_width=True)
-            else:
-                # デスクトップ：横並び
-                col1, col2, col3 = st.columns([2, 1, 1])
-                with col1:
-                    submit_button = st.form_submit_button("💌 送信", use_container_width=True)
-                with col2:
-                    clear_history = st.form_submit_button("🗑️ 履歴削除")
-                with col3:
-                    export_chat = st.form_submit_button("📄 エクスポート")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        # チャット処理
-        if submit_button and chat_input.strip():
-            handle_chat_message(chat_input.strip(), user_level, features)
-        
-        if clear_history:
-            st.session_state.chat_history = []
-            st.success("チャット履歴を削除しました")
-            st.experimental_rerun()
-        
-        if export_chat and st.session_state.chat_history:
-            export_chat_history()
-    
-    # ステータス情報（レスポンシブ対応）
-    st.markdown("---")
-    
-    # モバイル対応：画面サイズに応じてカラム数を調整
-    if st.session_state.get('mobile_view_active', False):
-        # モバイル：縦並び
-        st.markdown("### 📊 現在の状態")
-        st.markdown(f"**アクセスレベル**: {user_level.value.title()}")
-        if AI_AVAILABLE and user_level == UserLevel.OWNER:
-            st.markdown("**AI状態**: 🟢 アクティブ")
-            st.markdown("**学習段階**: 第1段階（感情学習中）")
-        else:
-            st.markdown("**AI状態**: 🔶 限定モード")
-        
-        st.markdown("### 🎯 利用可能機能")
-        available_count = sum(features.values())
-        total_count = len(features)
-        
-        progress = available_count / total_count if total_count > 0 else 0
-        st.progress(progress)
-        st.caption(f"{available_count}/{total_count} 機能が利用可能")
-        
-        if user_level == UserLevel.PUBLIC:
-            st.info("🔓 所有者認証で全機能解放")
-    else:
-        # デスクトップ：横並び
-        col1, col2 = st.columns(2)
-        
+        # デスクトップ：横並び（常にこのレイアウトを使用、CSSで制御）
+        col1, col2, col3 = st.columns([2, 1, 1])
         with col1:
-            st.markdown("### 📊 現在の状態")
-            st.markdown(f"**アクセスレベル**: {user_level.value.title()}")
-            if AI_AVAILABLE and user_level == UserLevel.OWNER:
-                st.markdown("**AI状態**: 🟢 アクティブ")
-                st.markdown("**学習段階**: 第1段階（感情学習中）")
-            else:
-                st.markdown("**AI状態**: 🔶 限定モード")
-            
+            submit_button = st.form_submit_button("▶ 送信", width="stretch")
         with col2:
-            st.markdown("### 🎯 利用可能機能")
-            available_count = sum(features.values())
-            total_count = len(features)
-            
-            progress = available_count / total_count if total_count > 0 else 0
-            st.progress(progress)
-            st.caption(f"{available_count}/{total_count} 機能が利用可能")
-            
-            if user_level == UserLevel.PUBLIC:
-                st.info("🔓 所有者認証で全機能解放")
+            clear_history = st.form_submit_button("🗑️ 履歴削除")
+        with col3:
+            export_chat = st.form_submit_button("📄 エクスポート")
+    
+    # チャット処理（全ユーザー対応）
+    if submit_button and chat_input.strip():
+        handle_chat_message(chat_input.strip(), user_level, features)
+    
+    if clear_history:
+        st.session_state.chat_history = []
+        st.success("会話履歴を削除しました")
+        st.rerun()
+    
+    if export_chat and st.session_state.chat_history:
+        export_chat_history()
+    
+    # 最小限のフッター（権利表示のみ）
+    st.markdown("---")
+    st.markdown(
+        "<div style='text-align: center; color: #666; font-size: 0.8em; margin-top: 2rem;'>"
+        "原作・企画: ozaki-taisuke（戯曲『あいのいろ』） | アートワーク: まつはち | "
+        "<a href='https://github.com/ozaki-taisuke/pupa-Ruri' target='_blank' style='color: #666;'>GitHub</a>"
+        "</div>", 
+        unsafe_allow_html=True
+    )
 
 def handle_chat_message(message: str, user_level: UserLevel, features: Dict[str, bool]):
     """チャットメッセージの処理（履歴管理機能付き）"""
@@ -556,6 +595,73 @@ def show_analytics_page(user_level: UserLevel, features: Dict[str, bool]):
     """分析ページ"""
     st.title("📊 分析")
     st.info("🚧 実装中...")
+
+def show_auth_page():
+    """所有者認証ページ（メインエリア表示）"""
+    st.title("🔐 所有者認証")
+    
+    # 戻るボタン
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col1:
+        if st.button("← ホームに戻る", width="stretch"):
+            st.session_state.show_auth = False
+            st.session_state.current_page = 'home'
+            st.rerun()
+    
+    st.markdown("---")
+    
+    # 認証フォーム
+    with st.container():
+        st.markdown("### 🔑 認証情報を入力してください")
+        
+        with st.form("auth_form"):
+            username = st.text_input("ユーザー名", placeholder="所有者ユーザー名を入力")
+            password = st.text_input("パスワード", type="password", placeholder="パスワードを入力")
+            
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                submit_button = st.form_submit_button("🔐 認証", width="stretch")
+            with col2:
+                cancel_button = st.form_submit_button("キャンセル", width="stretch")
+        
+        # 認証処理
+        if submit_button:
+            if username and password:
+                try:
+                    auth_handler = UnifiedAuth()
+                    success = auth_handler.authenticate(username, password, st.session_state)
+                    
+                    if success:
+                        st.success("✅ 認証に成功しました！")
+                        st.session_state.show_auth = False
+                        st.session_state.current_page = 'home'
+                        st.rerun()
+                    else:
+                        st.error("❌ 認証に失敗しました。ユーザー名とパスワードを確認してください。")
+                except Exception as e:
+                    st.error(f"❌ 認証エラー: {str(e)}")
+            else:
+                st.warning("⚠️ ユーザー名とパスワードを入力してください。")
+        
+        if cancel_button:
+            st.session_state.show_auth = False
+            st.session_state.current_page = 'home'
+            st.rerun()
+    
+    # 認証についての説明
+    st.markdown("---")
+    with st.expander("📖 認証について"):
+        st.markdown("""
+        **所有者認証について:**
+        
+        - 所有者として認証されると、全ての機能にアクセスできます
+        - AI会話、設定変更、分析機能などが利用可能になります
+        - 認証情報は安全に管理されています
+        
+        **パブリックモードでも利用可能:**
+        - 基本的な会話機能は認証なしでも利用できます
+        - より高度な機能を使用したい場合は認証してください
+        """)
 
 if __name__ == "__main__":
     st.set_page_config(

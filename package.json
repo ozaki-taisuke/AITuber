@@ -4,8 +4,8 @@
   "description": "AITuber Ruri - Streamlit WebUI",
   "scripts": {
     "build": "pip install -r requirements.txt",
-    "start": "streamlit run webui/app_beta.py --server.port=${PORT:-8501} --server.address=0.0.0.0",
-    "dev": "streamlit run webui/app_beta.py"
+    "start": "streamlit run app.py --server.port=${PORT:-8501} --server.address=0.0.0.0",
+    "dev": "streamlit run app.py"
   },
   "engines": {
     "python": "3.11.x"

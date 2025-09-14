@@ -2,81 +2,17 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "🎭 統一WebUI起動",
+			"label": "AITuber Ruri WebUI起動",
 			"type": "shell",
-			"command": "python -m streamlit run webui\\app_unified.py",
+			"command": "python -m streamlit run app.py",
 			"isBackground": true,
-			"group": "build",
-			"problemMatcher": [],
-			"presentation": {
-				"echo": true,
-				"reveal": "always",
-				"focus": false,
-				"panel": "new",
-				"showReuseMessage": true,
-				"clear": false
-			}
-		},
-		{
-			"label": "🎭 統一WebUI固定ポート起動",
-			"type": "shell",
-			"command": "python -m streamlit run webui\\app_unified.py --server.port 8501 --server.address localhost",
-			"isBackground": true,
-			"group": "build",
-			"problemMatcher": [],
-			"presentation": {
-				"echo": true,
-				"reveal": "always",
-				"focus": false,
-				"panel": "new"
-			}
-		},
-		{
-			"label": "🔧 統一環境テスト",
-			"type": "shell",
-			"command": "python -c \"from src.unified_config import UnifiedConfig; from src.unified_auth import UnifiedAuth; print('✅ 統一環境モジュール読み込み成功')\"",
-			"group": "test",
-			"presentation": {
-				"echo": true,
-				"reveal": "always",
-				"focus": false,
-				"panel": "shared"
-			}
-		},
-		{
-			"label": "ルリちゃんWebUI起動",
-			"type": "shell",
-			"command": "streamlit run webui/app.py",
-			"isBackground": true,
-			"problemMatcher": [],
 			"group": "build"
 		},
 		{
-			"label": "ルリちゃんWebUI固定ポート起動",
+			"label": "AITuber Ruri WebUI固定ポート起動",
 			"type": "shell",
-			"command": "python -m streamlit run webui/app.py --server.port 8501 --server.address localhost",
+			"command": "python -m streamlit run app.py --server.port 8501 --server.address localhost",
 			"isBackground": true,
-			"problemMatcher": [],
-			"group": "build",
-			"presentation": {
-				"echo": true,
-				"reveal": "always",
-				"focus": false,
-				"panel": "shared",
-				"showReuseMessage": true,
-				"clear": false
-			}
-		},
-		{
-			"label": "Git Status確認",
-			"type": "shell",
-			"command": "cd \"c:\\dev\\AITuber\" && git status",
-			"group": "build"
-		},
-		{
-			"label": "Git Status確認",
-			"type": "shell",
-			"command": "cd \"c:\\dev\\AITuber\"; git status",
 			"group": "build"
 		},
 		{
@@ -86,116 +22,9 @@
 			"group": "build"
 		},
 		{
-			"label": "Git Commit実行",
-			"type": "shell",
-			"command": "git add . ; git commit -m '戯曲『あいのいろ』原作コンテクストを反映'",
-			"group": "build"
-		},
-		{
-			"label": "Git Push実行",
-			"type": "shell",
-			"command": "git push origin main",
-			"group": "build"
-		},
-		{
-			"label": "Streamlitチェック",
-			"type": "shell",
-			"command": "python -c \"import streamlit; print('Streamlit OK')\"",
-			"group": "build"
-		},
-		{
-			"label": "Streamlitチェック",
-			"type": "shell",
-			"command": "python -c 'import streamlit; print(\"Streamlit OK\")'",
-			"group": "build"
-		},
-		{
 			"label": "インポートテスト",
 			"type": "shell",
 			"command": "python test_imports.py",
-			"group": "build"
-		},
-		{
-			"label": "WebUI直接実行",
-			"type": "shell",
-			"command": "python webui/app.py",
-			"group": "build"
-		},
-		{
-			"label": "WebUI正常起動",
-			"type": "shell",
-			"command": "streamlit run webui/app.py",
-			"isBackground": true,
-			"group": "build"
-		},
-		{
-			"label": "WebUI正常起動",
-			"type": "shell",
-			"command": "python -m streamlit run webui/app.py",
-			"isBackground": true,
-			"group": "build"
-		},
-		{
-			"label": "Streamlit WebUI起動",
-			"type": "shell",
-			"command": "python -m streamlit run webui\\app.py",
-			"isBackground": true,
-			"group": "build"
-		},
-		{
-			"label": "WebUI修正版起動",
-			"type": "shell",
-			"command": "python -m streamlit run webui\\app.py",
-			"isBackground": true,
-			"group": "build"
-		},
-		{
-			"label": "WebUI正常版起動",
-			"type": "shell",
-			"command": "python -m streamlit run webui\\app.py",
-			"isBackground": true,
-			"group": "build"
-		},
-		{
-			"label": "WebUIビジュアル改善版起動",
-			"type": "shell",
-			"command": "python -m streamlit run webui\\app.py",
-			"isBackground": true,
-			"group": "build"
-		},
-		{
-			"label": "WebUI最終版起動",
-			"type": "shell",
-			"command": "python -m streamlit run webui\\app.py",
-			"isBackground": true,
-			"group": "build"
-		},
-		{
-			"label": "WebUIメニュー修正版起動",
-			"type": "shell",
-			"command": "python -m streamlit run webui\\app.py",
-			"isBackground": true,
-			"group": "build"
-		},
-		{
-			"label": "WebUIアイコン統一版起動",
-			"type": "shell",
-			"command": "python -m streamlit run webui\\app.py",
-			"isBackground": true,
-			"group": "build"
-		},
-		{
-			"label": "WebUI文字化け修正版起動",
-			"type": "shell",
-			"command": "python -m streamlit run webui\\app.py",
-			"isBackground": true,
-			"group": "build"
-		},
-		{
-			"label": "WebUIメニュー統一版起動",
-			"type": "shell",
-			"command": "python -m streamlit run webui\\app.py",
-			"isBackground": true,
 			"group": "build"
 		}
 	]

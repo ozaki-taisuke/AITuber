@@ -41,28 +41,33 @@ class UnifiedConfig:
     # API設定（セキュア設定管理システム対応）
     @classmethod
     def get_api_keys(cls) -> Dict[str, str]:
-        """APIキーを取得（セキュア設定優先）"""
+        """APIキーを取得（Streamlit Secrets優先）"""
+        api_keys = {}
+        
+        # OpenAI APIキーの取得
         try:
-            # セキュア設定管理システムから取得を試行
+            # Streamlit secrets から優先的に取得
+            import streamlit as st
+            if hasattr(st, 'secrets') and 'OPENAI_API_KEY' in st.secrets:
+                api_keys['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
+            else:
+                # 環境変数から取得
+                api_keys['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY', '')
+        except Exception:
+            # エラー時は環境変数から取得
+            api_keys['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY', '')
+        
+        # セキュア設定管理システムからも取得を試行（後方互換性）
+        try:
             from src.secure_config import get_config_manager
             config_manager = get_config_manager()
-            openai_key = config_manager.get_raw_api_key('OPENAI_API_KEY')
-            if openai_key:
-                return {'OPENAI_API_KEY': openai_key}
+            secure_key = config_manager.get_raw_api_key('OPENAI_API_KEY')
+            if secure_key and not api_keys.get('OPENAI_API_KEY'):
+                api_keys['OPENAI_API_KEY'] = secure_key
         except Exception:
             pass
         
-        # 環境変数・Streamlit Secretsから取得
-        try:
-            import streamlit as st
-            if hasattr(st, 'secrets'):
-                return {
-                    'OPENAI_API_KEY': st.secrets.get('OPENAI_API_KEY', os.getenv('OPENAI_API_KEY', ''))
-                }
-        except Exception:
-            pass
-        
-        return {'OPENAI_API_KEY': os.getenv('OPENAI_API_KEY', '')}
+        return api_keys
     
     # API設定
     _api_keys = get_api_keys.__func__(None)
@@ -91,13 +96,18 @@ class UnifiedConfig:
             "character_display": True,
             "basic_ui": True,
             "image_upload": True,
+            "ai_conversation": True,     # パブリックでもAI会話可能
+            "character_status": True,    # キャラクター状態表示
+            
+            # 限定開放機能（パブリックでも利用可能）
+            "ai_chat": True,            # AIチャット機能を全ユーザーに開放
+            "emotion_learning": True,   # 感情学習の表示
+            "basic_image_analysis": True, # 基本的な画像分析
             
             # 所有者専用機能
-            "ai_chat": is_owner,
-            "emotion_learning": is_owner,
             "advanced_image_analysis": is_owner,
             "obs_integration": is_owner,
-            "streaming_features": is_owner,
+            "streaming_integration": is_owner,  # 修正：streaming_features → streaming_integration
             "api_access": is_owner,
             "debug_info": is_owner,
             "user_management": is_owner,
