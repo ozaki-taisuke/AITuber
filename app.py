@@ -862,23 +862,12 @@ def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
     else:
         st.info("🎭 ルリの画像を読み込み中...")
     
-    # チャット初期化（履歴復元機能付き）
-    if 'chat_history' not in st.session_state:
-        st.session_state.chat_history = []
-        # セッションから履歴を復元
-        load_chat_history_from_session()
-    if 'chat_input' not in st.session_state:
-        st.session_state.chat_input = ""
-    
-    # 会話エリア（コンパクト設計）
-    
-    # 全ユーザーでAI会話機能を利用可能に変更
+    # 会話エリア（モジュール化版）
     st.markdown("### 💬 ルリと話す")
     
-    # APIキー確認（非表示）
+    # APIキー確認と状態表示
     has_api_key = False
     try:
-        # 新しいAPIConfigを使用
         has_api_key = bool(APIConfig.get_openai_api_key())
     except Exception:
         pass
@@ -888,78 +877,36 @@ def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
     elif user_level == UserLevel.OWNER:
         st.markdown('<span class="status-indicator status-active">✅ フル機能モードで動作中</span>', unsafe_allow_html=True)
     
-    # チャット入力（全ユーザー対応）- 上部に配置
-    with st.form("chat_form", clear_on_submit=True):
-        chat_input = st.text_input(
-            "ルリにメッセージを送信:",
-            placeholder="どうしたの。",
-            key="chat_input_field"
-        )
+    # モジュール化されたチャットコンポーネントを使用
+    try:
+        from src.ui_components import render_compact_chat
+        render_compact_chat(user_level, features, "home_chat", max_display=5)
+    except ImportError as e:
+        # フォールバック: 従来の実装
+        st.warning(f"モジュール読み込みエラー: {e}")
+        st.info("🚧 従来のチャット機能を使用中...")
         
-        # レスポンシブ対応：CSS Media Queryで自動判定
-        st.markdown("""
-        <style>
-        .mobile-layout { display: none; }
-        .desktop-layout { display: block; }
+        # チャット初期化
+        if 'chat_history' not in st.session_state:
+            st.session_state.chat_history = []
+            load_chat_history_from_session()
         
-        @media (max-width: 768px) {
-            .mobile-layout { display: block; }
-            .desktop-layout { display: none; }
-        }
-        </style>
-        """, unsafe_allow_html=True)
+        # シンプルなチャット入力
+        with st.form("fallback_chat_form", clear_on_submit=True):
+            chat_input = st.text_input("ルリにメッセージを送信:", placeholder="どうしたの。")
+            submit_button = st.form_submit_button("送信")
         
-        # デスクトップ：横並び（常にこのレイアウトを使用、CSSで制御）
-        col1, col2, col3 = st.columns([2, 1, 1])
-        with col1:
-            submit_button = st.form_submit_button("▶ 送信", width="stretch")
-        with col2:
-            clear_history = st.form_submit_button("🗑️ 履歴削除")
-        with col3:
-            export_chat = st.form_submit_button("📄 エクスポート")
-    
-    # チャット処理（全ユーザー対応）
-    if submit_button and chat_input.strip():
-        handle_chat_message_stable(chat_input.strip(), user_level, features)
-
-    if clear_history:
-        st.session_state.chat_history = []
-        st.success("会話履歴を削除しました")
-
-    if export_chat and st.session_state.chat_history:
-        export_chat_history()
-
-    # 区切り線
-    st.markdown("---")
-
-    # チャット履歴の安定表示（静的・ちらつき防止）
-    if st.session_state.chat_history:
-        st.markdown("#### 📝 会話履歴")
+        if submit_button and chat_input.strip():
+            handle_chat_message_stable(chat_input.strip(), user_level, features)
         
-        # 履歴表示数を固定（5件）- 古いものから順番に表示
-        display_count = 5
-        recent_history = st.session_state.chat_history[-display_count:]
-        
-        # 古いものが上、新しいものが下になるよう通常順序で表示
-        for i, (timestamp, user_msg, ruri_msg) in enumerate(recent_history):
-            # タイムスタンプ表示
-            st.markdown(f'<div class="message-timestamp">{timestamp}</div>', unsafe_allow_html=True)
-            
-            # ユーザーメッセージボックス
-            st.markdown(f"""
-            <div class="user-message">
-                <div class="message-label">あなた</div>
-                <div class="message-content">{user_msg}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # ルリメッセージボックス
-            st.markdown(f"""
-            <div class="ruri-message">
-                <div class="message-label">ルリ</div>
-                <div class="message-content">{ruri_msg}</div>
-            </div>
-            """, unsafe_allow_html=True)
+        # シンプルな履歴表示
+        if st.session_state.chat_history:
+            st.markdown("#### 📝 会話履歴")
+            recent_history = st.session_state.chat_history[-3:]
+            for timestamp, user_msg, ruri_msg in recent_history:
+                st.write(f"**[{timestamp}] あなた:** {user_msg}")
+                st.write(f"**[{timestamp}] ルリ:** {ruri_msg}")
+                st.markdown("---")
 
     # 最小限のフッター（権利表示のみ）
     st.markdown("---")
@@ -1190,9 +1137,16 @@ def show_character_page(user_level: Any, features: Dict[str, bool]):
     st.info("🚧 実装中...")
 
 def show_ai_conversation_page(user_level: Any, features: Dict[str, bool]):
-    """AI会話ページ"""
-    st.title("💬 AI会話")
-    st.info("🚧 実装中...")
+    """AI会話ページ（モジュール化版）"""
+    try:
+        # 新しいモジュール化されたUIコンポーネントを使用
+        from src.ui_components import render_full_chat_page
+        render_full_chat_page(user_level, features)
+    except ImportError as e:
+        # フォールバック: 従来の実装
+        st.title("💬 AI会話")
+        st.error(f"モジュール読み込みエラー: {e}")
+        st.info("🚧 モジュール化移行中... 一時的にフォールバック表示中")
 
 def show_image_analysis_page(user_level: Any, features: Dict[str, bool]):
     """画像分析ページ"""
