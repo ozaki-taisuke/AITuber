@@ -116,17 +116,19 @@ class RuriCharacter:
         """キャラクター設定をプロバイダーに適用"""
         if self.ai_provider and hasattr(self.ai_provider, 'set_character_context'):
             try:
-                # 詳細設定を含む包括的なコンテキストを作成
+                # 自然言語設定を最優先で含める包括的なコンテキストを作成
                 enhanced_context = {
+                    "character_description": self.character_profile.get("character_description", ""),
+                    "natural_settings": self.character_profile.get("natural_settings", ""),
                     "basic_info": {
                         "name": self.character_profile.get("name", "ルリ"),
                         "origin": self.character_profile.get("origin", "戯曲『あいのいろ』"),
                         "personality": self.character_profile.get("personality", "純粋で好奇心旺盛"),
                         "speaking_style": self.character_profile.get("speaking_style", "丁寧で親しみやすい")
                     },
-                    "detailed_settings": self.character_profile.get("detailed_settings", ""),
-                    "emotion_styles": self.character_profile.get("emotion_speaking_styles", {}),
-                    "content_ideas": self.character_profile.get("content_ideas", []),
+                    "config_data": self.character_profile.get("config", {}),
+                    "emotions": self.character_profile.get("emotions", {}),
+                    "response_patterns": self.character_profile.get("response_patterns", {}),
                     "current_state": {
                         "color_stage": self.character_profile.get("color_stage", "monochrome"),
                         "learned_emotions": self.character_profile.get("learned_emotions", [])
@@ -135,8 +137,15 @@ class RuriCharacter:
                 
                 context_json = json.dumps(enhanced_context, ensure_ascii=False, indent=2)
                 self.ai_provider.set_character_context(context_json)
-                print("✅ 詳細キャラクター設定をAIプロバイダーに適用しました")
+                print("✅ 自然言語設定を含む詳細キャラクター設定をAIプロバイダーに適用しました")
                 print(f"📋 設定項目数: {len(enhanced_context)}")
+                
+                # 自然言語設定が含まれているかデバッグ出力
+                if self.character_profile.get("character_description"):
+                    print("📝 自然言語設定が正常に含まれています")
+                else:
+                    print("⚠️ 自然言語設定が含まれていません")
+                    
             except Exception as e:
                 print(f"⚠️ キャラクター設定の適用に失敗: {e}")
                 # フォールバック: 基本設定のみ適用

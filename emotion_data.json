@@ -3,11 +3,12 @@
     "joy": 1.0,
     "sadness": 1.0,
     "anger": 0.7000000000000001,
-    "anticipation": 0.1,
-    "love": 0.6
+    "anticipation": 0.2,
+    "love": 0.6,
+    "surprise": 0.1
   },
   "color_stage": "rainbow_transition",
-  "total_interactions": 33,
+  "total_interactions": 36,
   "emotion_history": [
     {
       "timestamp": "2025-09-14T23:03:31.062181",
@@ -206,7 +207,25 @@
       "emotion": "joy",
       "intensity": 0.2,
       "learned_level": 1.0
+    },
+    {
+      "timestamp": "2025-09-15T00:02:58.066373",
+      "emotion": "joy",
+      "intensity": 0.1,
+      "learned_level": 1.0
+    },
+    {
+      "timestamp": "2025-09-15T00:02:58.066373",
+      "emotion": "surprise",
+      "intensity": 0.1,
+      "learned_level": 0.1
+    },
+    {
+      "timestamp": "2025-09-15T00:02:58.067913",
+      "emotion": "anticipation",
+      "intensity": 0.1,
+      "learned_level": 0.2
     }
   ],
-  "last_updated": "2025-09-14T23:50:51.719354"
+  "last_updated": "2025-09-15T00:02:58.067913"
 }

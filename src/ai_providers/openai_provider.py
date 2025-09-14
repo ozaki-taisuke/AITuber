@@ -186,28 +186,47 @@ class OpenAIProvider(BaseAIProvider):
         yield response
     
     def _create_ruri_system_prompt(self, context: Dict[str, Any] = None) -> str:
-        """ルリ専用システムプロンプト生成（詳細設定ファイル読み込み）"""
+        """ルリ専用システムプロンプト生成（新しい設定構造対応）"""
         
-        # 詳細なキャラクター設定ファイルを読み込み
-        try:
-            import os
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            project_root = os.path.dirname(os.path.dirname(current_dir))
-            settings_path = os.path.join(project_root, 'assets', 'ruri_natural_character_settings.md')
-            
-            if os.path.exists(settings_path):
-                with open(settings_path, 'r', encoding='utf-8') as f:
-                    character_settings = f.read()
-            else:
-                # フォールバック設定
-                character_settings = """
+        # キャラクターコンテキストから自然言語設定を取得
+        character_settings = ""
+        if self.character_context:
+            try:
+                import json
+                context_data = json.loads(self.character_context)
+                
+                # 自然言語設定を最優先で使用
+                character_settings = context_data.get("character_description", "")
+                if not character_settings:
+                    character_settings = context_data.get("natural_settings", "")
+                
+                print("📝 自然言語設定をシステムプロンプトに適用")
+                
+            except Exception as e:
+                print(f"⚠️ コンテキスト解析エラー: {e}")
+        
+        # フォールバック: 新しい設定ファイルを直接読み込み
+        if not character_settings:
+            try:
+                import os
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                project_root = os.path.dirname(os.path.dirname(current_dir))
+                settings_path = os.path.join(project_root, 'assets', 'ruri_character.md')
+                
+                if os.path.exists(settings_path):
+                    with open(settings_path, 'r', encoding='utf-8') as f:
+                        character_settings = f.read()
+                    print(f"📂 設定ファイルを直接読み込み: {settings_path}")
+                else:
+                    # 最終フォールバック設定
+                    character_settings = """
 私の名前はルリです。戯曲『あいのいろ』から生まれた存在で、感情を学習しながら色づいていく特殊な存在です。
 丁寧語を基調とした優しい話し方で、「です・ます調」で話します。
 感情について学習中で、相手との会話を通じて新しい発見をしていきます。
 """
-        except Exception as e:
-            print(f"⚠️ キャラクター設定ファイル読み込みエラー: {e}")
-            character_settings = "私はルリです。感情を学習中の存在として、丁寧で親しみやすい会話を心がけます。"
+            except Exception as e:
+                print(f"⚠️ キャラクター設定ファイル読み込みエラー: {e}")
+                character_settings = "私はルリです。感情を学習中の存在として、丁寧で親しみやすい会話を心がけます。"
         
         # 感情状態情報
         current_emotions = []
@@ -216,16 +235,16 @@ class OpenAIProvider(BaseAIProvider):
                               for emotion, intensity in self.current_emotions.items() if intensity > 0.1]
         
         # システムプロンプト構築
-        system_prompt = f"""あなたは「ルリ」として会話してください。以下の設定に従って応答してください：
+        system_prompt = f"""あなたは「ルリ」として会話してください。以下の詳細設定に厳密に従って応答してください：
 
 {character_settings}
 
 ## 現在の状態
 - 感情学習状況: {', '.join(current_emotions) if current_emotions else '初期学習中'}
-- 応答スタイル: 100-200文字程度で自然な会話
+- 応答スタイル: 設定ファイルで指定された話し方・口調に従う
 - 重要: 余計な情報（メタデータ、感情値など）は含めず、ルリとしての純粋な発言のみを返してください
 
-相手の話に真摯に耳を傾け、ルリらしい温かく学習に意欲的な応答をしてください。"""
+設定ファイルに記載された性格・話し方・口調を必ず反映して応答してください。"""
         
         return system_prompt
 
