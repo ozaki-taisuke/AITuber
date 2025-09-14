@@ -3,8 +3,21 @@ import streamlit as st
 import sys
 import os
 
-# 🚀 Streamlit Cloud用 高速起動モード
-CLOUD_MODE = os.environ.get('STREAMLIT_SHARING_MODE') == '1' or 'streamlit.io' in os.environ.get('URL', '')
+# 🚀 Streamlit Cloud用 高速起動モード - 検出ロジック改善
+def detect_cloud_mode():
+    """Streamlit Cloud環境を検出"""
+    cloud_indicators = [
+        os.environ.get('STREAMLIT_SHARING_MODE') == '1',
+        'streamlit.io' in os.environ.get('URL', ''),
+        'streamlitapp.com' in os.environ.get('URL', ''),
+        '/mount/src/' in os.getcwd(),  # Streamlit Cloudの典型的なパス
+        os.environ.get('HOSTNAME', '').startswith('streamlit-'),
+        'STREAMLIT_SERVER_HEADLESS' in os.environ,
+        '/app/' in os.getcwd(),  # Docker環境
+    ]
+    return any(cloud_indicators)
+
+CLOUD_MODE = detect_cloud_mode()
 
 # プロジェクトパスの設定（本番環境対応強化）
 import sys
@@ -190,25 +203,33 @@ def get_ruri_character():
     
     return DummyRuriCharacter()
 
-try:
-    import cv2
-    import numpy as np
-    IMAGE_PROCESSING_AVAILABLE = True
-    if not CLOUD_MODE:
-        print("✅ 画像処理機能: 利用可能")
-except ImportError as e:
-    if not CLOUD_MODE:
-        print(f"⚠️ 画像処理機能の読み込みに失敗: {e}")
-    IMAGE_PROCESSING_AVAILABLE = False
+# オプション機能の初期化（一度だけ実行）
+if 'optional_features_initialized' not in st.session_state:
+    st.session_state.optional_features_initialized = True
+    
+    try:
+        import cv2
+        import numpy as np
+        IMAGE_PROCESSING_AVAILABLE = True
+        if not CLOUD_MODE:
+            print("✅ 画像処理機能: 利用可能")
+    except ImportError as e:
+        if not CLOUD_MODE:
+            print(f"⚠️ 画像処理機能の読み込みに失敗: {e}")
+        IMAGE_PROCESSING_AVAILABLE = False
 
-try:
-    import plotly.graph_objects as go
-    PLOTTING_AVAILABLE = True
-    if not CLOUD_MODE:
-        print("✅ Plotly機能: 利用可能")
-except ImportError:
-    if not CLOUD_MODE:
-        print("⚠️ Plotly機能は無効です")
+    try:
+        import plotly.graph_objects as go
+        PLOTTING_AVAILABLE = True
+        if not CLOUD_MODE:
+            print("✅ Plotly機能: 利用可能")
+    except ImportError:
+        if not CLOUD_MODE:
+            print("⚠️ Plotly機能は無効です")
+        PLOTTING_AVAILABLE = False
+else:
+    # 既に初期化済みの場合はデフォルト値を設定
+    IMAGE_PROCESSING_AVAILABLE = False
     PLOTTING_AVAILABLE = False
 
 def main():
@@ -227,14 +248,18 @@ def main():
             if 'user_level' not in st.session_state:
                 st.session_state.user_level = UserLevel.PUBLIC if hasattr(UserLevel, 'PUBLIC') else "public"
         
-        if not CLOUD_MODE:
-            print("🚀 アプリケーション初期化開始...")
+        # アプリケーション初期化ログ（一度だけ表示）
+        if 'app_initialized' not in st.session_state:
+            st.session_state.app_initialized = True
+            if not CLOUD_MODE:
+                print("🚀 アプリケーション初期化開始...")
         
         # レスポンシブデザインのセットアップ（安全実行）
         try:
             setup_responsive_design()
-            if not CLOUD_MODE:
+            if not CLOUD_MODE and not st.session_state.get('design_setup_logged', False):
                 print("✅ レスポンシブデザイン: 設定完了")
+                st.session_state.design_setup_logged = True
         except Exception as e:
             if not CLOUD_MODE:
                 print(f"⚠️ レスポンシブデザイン設定エラー: {e}")
@@ -253,8 +278,10 @@ def main():
             # 初期化完了フラグを設定
             st.session_state.initialization_complete = True
         
-        if not CLOUD_MODE:
+        # 設定取得ログ（一度だけ表示）
+        if not CLOUD_MODE and not st.session_state.get('config_fetch_logged', False):
             print("🎯 設定取得中...")
+            st.session_state.config_fetch_logged = True
         
         # 設定の取得（エラーハンドリング強化）
         try:
@@ -269,9 +296,11 @@ def main():
             ui_config = {"title": "AITuber ルリ", "theme": "default"}
             features = {"ai_conversation": True, "character_status": True}
         
-        if not CLOUD_MODE:
+        # ユーザー情報ログ（一度だけ表示）
+        if not CLOUD_MODE and not st.session_state.get('user_info_logged', False):
             print(f"👤 ユーザーレベル: {user_level}")
             print(f"🔧 利用可能機能: {list(features.keys())}")
+            st.session_state.user_info_logged = True
         
         # レスポンシブサイドバーの設定
         setup_responsive_sidebar(user_level, features, ui_config)
@@ -296,8 +325,10 @@ def main():
                 show_auth_page()
                 return
         
-        if not CLOUD_MODE:
+        # ページ表示ログ（一度だけ、または変更時のみ）
+        if not CLOUD_MODE and st.session_state.get('last_logged_page') != current_page:
             print(f"📄 ページ表示: {current_page}")
+            st.session_state.last_logged_page = current_page
         
         # メインページの表示
         page = st.session_state.get('current_page', 'home')
@@ -319,8 +350,10 @@ def main():
         else:
             st.error(f"ページ '{page}' は利用できません")
             
-        if not CLOUD_MODE:
+        # 完了ログ（一度だけ表示）
+        if not CLOUD_MODE and not st.session_state.get('app_complete_logged', False):
             print("✅ アプリケーション表示完了")
+            st.session_state.app_complete_logged = True
         
     except Exception as e:
         if not CLOUD_MODE:
