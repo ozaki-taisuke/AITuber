@@ -859,18 +859,21 @@ def setup_responsive_sidebar(user_level: Any, features: Dict[str, bool], ui_conf
         ]
         
         for page_key, page_name, enabled in menu_items:
-            if enabled:
-                if st.button(page_name, key=f"nav_{page_key}_{unique_id}", width="stretch"):
-                    current_page = st.session_state.get('current_page', 'home')
-                    if current_page != page_key:  # 異なるページの場合のみ遷移
-                        st.session_state.current_page = page_key
-                        # 会話処理中でない場合のみrerunを実行
-                        if not st.session_state.get('chat_processing', False):
-                            st.rerun()
-            else:
-                st.button(page_name + " 🔒", disabled=True, width="stretch",
-                         key=f"nav_{page_key}_disabled_{unique_id}",
-                         help="所有者認証が必要です")
+            # すべてのボタンを表示（非活性の場合はdisabled=True）
+            button_clicked = st.button(
+                page_name, 
+                key=f"nav_{page_key}_{unique_id}",
+                disabled=not enabled,
+                help="この機能は開発中です" if not enabled else None
+            )
+            
+            if enabled and button_clicked:
+                current_page = st.session_state.get('current_page', 'home')
+                if current_page != page_key:  # 異なるページの場合のみ遷移
+                    st.session_state.current_page = page_key
+                    # 会話処理中でない場合のみrerunを実行
+                    if not st.session_state.get('chat_processing', False):
+                        st.rerun()
         
         # 認証関連（改良版・ホットリロード対応）
         st.markdown("---")
