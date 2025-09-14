@@ -186,29 +186,113 @@ def setup_responsive_design():
         padding-top: 2rem;
     }
     
-    /* 会話関連スタイル - 明るく視認性重視 */
+    /* 会話関連スタイル - 個別ボックス設計 */
     .chat-container {
         max-width: 100%;
-        padding: 1.5rem;
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-        border-radius: 1rem;
-        margin: 1rem 0;
-        border: 2px solid #cbd5e1;
-    }
-    
-    .chat-message {
-        background: #ffffff;
         padding: 1rem;
-        margin: 0.75rem 0;
-        border-radius: 0.75rem;
-        border-left: 5px solid #6366f1;
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
-        transition: all 0.2s ease;
+        margin: 0.5rem 0;
     }
     
-    .chat-message:hover {
-        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.25);
-        transform: translateY(-1px);
+    /* ユーザーメッセージボックス */
+    .user-message {
+        background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);
+        padding: 1rem 1.25rem;
+        margin: 0.75rem 0;
+        border-radius: 1rem 1rem 0.25rem 1rem;
+        border-left: 4px solid #0288d1;
+        color: #01579b;
+        box-shadow: 0 3px 12px rgba(2, 136, 209, 0.2);
+        max-width: 85%;
+        margin-left: auto;
+        margin-right: 0;
+        animation: slideInRight 0.3s ease-out;
+    }
+    
+    /* ルリメッセージボックス */
+    .ruri-message {
+        background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+        padding: 1rem 1.25rem;
+        margin: 0.75rem 0;
+        border-radius: 1rem 1rem 1rem 0.25rem;
+        border-left: 4px solid #8e24aa;
+        color: #4a148c;
+        box-shadow: 0 3px 12px rgba(142, 36, 170, 0.2);
+        max-width: 85%;
+        margin-left: 0;
+        margin-right: auto;
+        animation: slideInLeft 0.3s ease-out;
+    }
+    
+    /* タイピング効果 */
+    .typing-indicator {
+        background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+        padding: 1rem 1.25rem;
+        margin: 0.75rem 0;
+        border-radius: 1rem 1rem 1rem 0.25rem;
+        border-left: 4px solid #8e24aa;
+        color: #4a148c;
+        box-shadow: 0 3px 12px rgba(142, 36, 170, 0.2);
+        max-width: 85%;
+        margin-left: 0;
+        margin-right: auto;
+        animation: pulse 1.5s infinite;
+    }
+    
+    .typing-dots {
+        display: inline-block;
+        position: relative;
+    }
+    
+    .typing-dots span {
+        opacity: 0;
+        animation: typingDots 1.4s infinite;
+    }
+    
+    .typing-dots span:nth-child(1) { animation-delay: 0s; }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    
+    /* アニメーション定義 */
+    @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(30px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-30px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    
+    @keyframes typingDots {
+        0%, 60%, 100% { opacity: 0; }
+        30% { opacity: 1; }
+    }
+    
+    /* タイムスタンプスタイル */
+    .message-timestamp {
+        font-size: 0.75rem;
+        color: rgba(0, 0, 0, 0.5);
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+    
+    /* ラベルスタイル */
+    .message-label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+        opacity: 0.8;
+    }
+    
+    .message-content {
+        font-size: 1rem;
+        line-height: 1.5;
+        margin: 0;
     }
     
     .chat-input-section {
@@ -259,15 +343,28 @@ def setup_responsive_design():
     /* モバイル対応 */
     @media (max-width: 768px) {
         .chat-container {
-            padding: 1rem;
-            margin: 0.75rem 0;
-            border-radius: 0.75rem;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
         }
         
-        .chat-message {
-            padding: 0.75rem;
+        .user-message, .ruri-message, .typing-indicator {
+            padding: 0.75rem 1rem;
             font-size: 0.95rem;
             margin: 0.5rem 0;
+            max-width: 90%;
+            border-radius: 0.75rem 0.75rem 0.25rem 0.75rem;
+        }
+        
+        .ruri-message, .typing-indicator {
+            border-radius: 0.75rem 0.75rem 0.75rem 0.25rem;
+        }
+        
+        .message-content {
+            font-size: 0.9rem;
+        }
+        
+        .message-timestamp {
+            font-size: 0.7rem;
         }
         
         .chat-input-section {
@@ -450,7 +547,7 @@ def show_home_page(user_level: UserLevel, features: Dict[str, bool], ui_config: 
     elif user_level == UserLevel.OWNER:
         st.markdown('<span class="status-indicator status-active">✅ フル機能モードで動作中</span>', unsafe_allow_html=True)
     
-    # チャット履歴の表示（全ユーザー対応・新しいものが上）
+    # チャット履歴の表示（個別ボックス・新しいものが上）
     if st.session_state.chat_history:
         st.markdown("#### 📝 会話履歴")
         
@@ -460,11 +557,22 @@ def show_home_page(user_level: UserLevel, features: Dict[str, bool], ui_config: 
         
         # 新しいものが上に来るように逆順で表示
         for i, (timestamp, user_msg, ruri_msg) in enumerate(reversed(recent_history)):
+            # タイムスタンプ表示
+            st.markdown(f'<div class="message-timestamp">{timestamp}</div>', unsafe_allow_html=True)
+            
+            # ユーザーメッセージボックス
             st.markdown(f"""
-            <div class="chat-message">
-                <small style="color: var(--text-secondary); font-weight: 500;">{timestamp}</small><br>
-                <strong class="highlight-text">ルリ:</strong> {ruri_msg}<br>
-                <strong style="color: var(--text-primary);">あなた:</strong> {user_msg}
+            <div class="user-message">
+                <div class="message-label">あなた</div>
+                <div class="message-content">{user_msg}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # ルリメッセージボックス
+            st.markdown(f"""
+            <div class="ruri-message">
+                <div class="message-label">ルリ</div>
+                <div class="message-content">{ruri_msg}</div>
             </div>
             """, unsafe_allow_html=True)
     
@@ -521,26 +629,43 @@ def show_home_page(user_level: UserLevel, features: Dict[str, bool], ui_config: 
     )
 
 def handle_chat_message(message: str, user_level: UserLevel, features: Dict[str, bool]):
-    """チャットメッセージの処理（履歴管理機能付き）"""
+    """チャットメッセージの処理（タイピング効果付き）"""
     import datetime
+    import time
     
     timestamp = datetime.datetime.now().strftime("%H:%M")
     
     # チャット履歴の自動保存設定
     max_history = 50  # 最大保存履歴数
     
+    # ユーザーメッセージを即座に表示
+    st.markdown(f'<div class="message-timestamp">{timestamp}</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="user-message">
+        <div class="message-label">あなた</div>
+        <div class="message-content">{message}</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # ルリのタイピング中表示
+    typing_placeholder = st.empty()
+    typing_placeholder.markdown(f"""
+    <div class="typing-indicator">
+        <div class="message-label">ルリ</div>
+        <div class="message-content">
+            考え中<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # タイピング効果の待機時間
+    time.sleep(1.5)
+    
     if lazy_import_ai() and features.get("ai_conversation"):
         try:
             # AI応答の生成（遅延インポート）
-            from ai_providers import get_configured_provider
-            from character_ai import RuriCharacter
-            
-            provider = get_configured_provider()
-            if provider:
-                ruri = get_ruri_character()
-                ai_response = ruri.generate_response(message)
-            else:
-                ai_response = "🤖 AIプロバイダーが設定されていません"
+            ruri = get_ruri_character()
+            ai_response = ruri.generate_response(message)
         except Exception as e:
             ai_response = f"⚠️ AI応答エラー: {str(e)}"
     else:
@@ -555,21 +680,38 @@ def handle_chat_message(message: str, user_level: UserLevel, features: Dict[str,
         import random
         ai_response = random.choice(fallback_responses)
     
+    # タイピング表示を削除してルリの応答を表示
+    typing_placeholder.empty()
+    
+    # ルリの応答をタイピング効果付きで表示
+    response_placeholder = st.empty()
+    
+    # 簡易タイピング効果（文字を段階的に表示）
+    displayed_text = ""
+    for i in range(len(ai_response)):
+        displayed_text = ai_response[:i+1]
+        response_placeholder.markdown(f"""
+        <div class="ruri-message">
+            <div class="message-label">ルリ</div>
+            <div class="message-content">{displayed_text}<span style="opacity: 0.5;">|</span></div>
+        </div>
+        """, unsafe_allow_html=True)
+        time.sleep(0.05)  # タイピング速度調整
+    
+    # 最終的なメッセージ（カーソル削除）
+    response_placeholder.markdown(f"""
+    <div class="ruri-message">
+        <div class="message-label">ルリ</div>
+        <div class="message-content">{ai_response}</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
     # 履歴に追加（自動的に古い履歴を削除）
     st.session_state.chat_history.append((timestamp, message, ai_response))
     
     # 履歴のサイズ制限
     if len(st.session_state.chat_history) > max_history:
         st.session_state.chat_history = st.session_state.chat_history[-max_history:]
-    
-    # 最新の会話として統一表示（一時的にハイライト）
-    st.markdown(f"""
-    <div class="chat-message" style="border-left: 3px solid #00ff9f; background: rgba(0, 255, 159, 0.1);">
-        <small style="color: var(--text-secondary); font-weight: 500;">{timestamp} ✨ 最新</small><br>
-        <strong class="highlight-text">ルリ:</strong> {ai_response}<br>
-        <strong style="color: var(--text-primary);">あなた:</strong> {message}
-    </div>
-    """, unsafe_allow_html=True)
     
     # 永続化のためのローカルストレージ保存（オプション）
     save_chat_history_to_session()
