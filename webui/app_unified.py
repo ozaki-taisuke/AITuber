@@ -205,53 +205,173 @@ def display_main_content(page: str, user_level: UserLevel, features: Dict[str, b
             show_logs_page(user_level, features)
 
 def show_home_page(user_level: UserLevel, features: Dict[str, bool], ui_config: Dict):
-    """ホームページ"""
-    st.title("🌟 ようこそ")
+    """ホームページ - チャット機能付きリニューアル版"""
     
-    st.markdown(f"""
-    ## 🎭 AITuber ルリ について
+    # メイン画像とタイトル
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h1 style="color: #4a90e2; margin-bottom: 0.5rem;">� AITuber ルリ</h1>
+        <p style="color: #666; font-size: 1.1rem;">戯曲『あいのいろ』から生まれた感情学習AI</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    戯曲『あいのいろ』の主人公「ルリ」のAITuberシステムです。
+    # ルリ画像の表示
+    image_path = os.path.join(project_root, "assets", "ruri_imageboard.png")
+    if os.path.exists(image_path):
+        col_left, col_center, col_right = st.columns([1, 2, 1])
+        with col_center:
+            st.image(image_path, caption="🎭 ルリちゃん", use_column_width=True)
+    else:
+        st.info("🎭 ルリの画像を読み込み中...")
     
-    **現在のアクセスレベル**: {user_level.value.title()}
-    """)
+    # チャット初期化
+    if 'chat_history' not in st.session_state:
+        st.session_state.chat_history = []
+    if 'chat_input' not in st.session_state:
+        st.session_state.chat_input = ""
     
-    # 利用可能機能の概要
+    # チャット機能（認証レベルによって制限）
+    st.markdown("---")
+    if user_level == UserLevel.PUBLIC:
+        st.markdown("### 💬 ルリとチャット")
+        st.info("🔒 フル機能を利用するには所有者認証が必要です")
+        
+        # パブリック用の簡易チャット
+        chat_input = st.text_input(
+            "メッセージを入力してください...",
+            placeholder="こんにちは、ルリちゃん！",
+            disabled=True,
+            help="所有者認証後にチャット機能が利用できます"
+        )
+        st.caption("👆 認証後にメッセージ送信が可能になります")
+        
+    else:
+        st.markdown("### 💬 ルリとチャット")
+        
+        # チャット履歴の表示
+        if st.session_state.chat_history:
+            st.markdown("#### 📝 会話履歴")
+            chat_container = st.container()
+            with chat_container:
+                for i, (timestamp, user_msg, ruri_msg) in enumerate(st.session_state.chat_history[-5:]):  # 最新5件
+                    st.markdown(f"""
+                    <div style="background: #f0f0f0; padding: 0.5rem; margin: 0.5rem 0; border-radius: 0.5rem;">
+                        <small style="color: #666;">{timestamp}</small><br>
+                        <strong>あなた:</strong> {user_msg}<br>
+                        <strong style="color: #4a90e2;">ルリ:</strong> {ruri_msg}
+                    </div>
+                    """, unsafe_allow_html=True)
+        
+        # チャット入力
+        with st.form("chat_form", clear_on_submit=True):
+            chat_input = st.text_input(
+                "ルリにメッセージを送信:",
+                placeholder="今日はどんな気分？感情を教えて！",
+                key="chat_input_field"
+            )
+            
+            col1, col2, col3 = st.columns([2, 1, 1])
+            with col1:
+                submit_button = st.form_submit_button("💌 送信", use_container_width=True)
+            with col2:
+                clear_history = st.form_submit_button("🗑️ 履歴削除")
+            with col3:
+                export_chat = st.form_submit_button("📄 エクスポート")
+        
+        # チャット処理
+        if submit_button and chat_input.strip():
+            handle_chat_message(chat_input.strip(), user_level, features)
+        
+        if clear_history:
+            st.session_state.chat_history = []
+            st.success("チャット履歴を削除しました")
+            st.experimental_rerun()
+        
+        if export_chat and st.session_state.chat_history:
+            export_chat_history()
+    
+    # ステータス情報
+    st.markdown("---")
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("### ✅ 利用可能機能")
-        available_features = [k.replace('_', ' ').title() for k, v in features.items() if v]
-        for feature in available_features[:5]:  # 最初の5個を表示
-            st.write(f"• {feature}")
-    
-    with col2:
-        st.markdown("### 🎯 所有者認証で解放される機能")
-        if user_level == UserLevel.PUBLIC:
-            st.write("• AI会話機能")
-            st.write("• 感情学習システム")
-            st.write("• 高度な画像分析")
-            st.write("• OBS Studio連携")
-            st.write("• 配信管理機能")
-            st.write("• システム設定管理")
-            st.write("• ユーザー管理")
-            st.write("• 分析レポート")
+        st.markdown("### � 現在の状態")
+        st.markdown(f"**アクセスレベル**: {user_level.value.title()}")
+        if AI_AVAILABLE and user_level == UserLevel.OWNER:
+            st.markdown("**AI状態**: 🟢 アクティブ")
+            st.markdown("**学習段階**: 第1段階（感情学習中）")
         else:
-            st.success("✅ 全機能が利用可能です！")
-    
-    # システム状態
-    if ui_config['show_technical_details']:
-        st.markdown("### 🔧 システム状態")
-        col1, col2, col3, col4 = st.columns(4)
+            st.markdown("**AI状態**: 🔶 限定モード")
         
-        with col1:
-            st.metric("AI機能", "✅ 有効" if AI_AVAILABLE else "❌ 無効")
-        with col2:
-            st.metric("画像処理", "✅ 有効" if IMAGE_PROCESSING_AVAILABLE else "❌ 無効")
-        with col3:
-            st.metric("プロット機能", "✅ 有効" if PLOTTING_AVAILABLE else "❌ 無効")
-        with col4:
-            st.metric("環境", UnifiedConfig.ENVIRONMENT.title())
+    with col2:
+        st.markdown("### 🎯 利用可能機能")
+        available_count = sum(features.values())
+        total_count = len(features)
+        
+        progress = available_count / total_count if total_count > 0 else 0
+        st.progress(progress)
+        st.caption(f"{available_count}/{total_count} 機能が利用可能")
+        
+        if user_level == UserLevel.PUBLIC:
+            st.info("🔓 所有者認証で全機能解放")
+
+def handle_chat_message(message: str, user_level: UserLevel, features: Dict[str, bool]):
+    """チャットメッセージの処理"""
+    import datetime
+    
+    timestamp = datetime.datetime.now().strftime("%H:%M")
+    
+    if AI_AVAILABLE and features.get("ai_conversation"):
+        try:
+            # AI応答の生成
+            provider = get_configured_provider()
+            if provider:
+                ruri = RuriCharacter()
+                response = ruri.respond_to_message(message)
+                ai_response = response.get("message", "申し訳ございません、今は応答できません...")
+            else:
+                ai_response = "🤖 AIプロバイダーが設定されていません"
+        except Exception as e:
+            ai_response = f"⚠️ AI応答エラー: {str(e)}"
+    else:
+        # AI機能が無効な場合のフォールバック
+        fallback_responses = [
+            "ありがとうございます！感情を学習中です...",
+            "そうですね...色々な感情があるんですね",
+            "まだ学習中ですが、あなたの言葉は覚えています",
+            "もっとお話ししたいです！",
+            "感情って...難しいですね"
+        ]
+        import random
+        ai_response = random.choice(fallback_responses)
+    
+    # 履歴に追加
+    st.session_state.chat_history.append((timestamp, message, ai_response))
+    
+    # 成功メッセージ
+    st.success(f"ルリ: {ai_response}")
+
+def export_chat_history():
+    """チャット履歴のエクスポート"""
+    if not st.session_state.chat_history:
+        st.warning("エクスポートする履歴がありません")
+        return
+    
+    import datetime
+    
+    export_text = f"# ルリとの会話履歴 - {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n"
+    
+    for timestamp, user_msg, ruri_msg in st.session_state.chat_history:
+        export_text += f"## {timestamp}\n"
+        export_text += f"**あなた**: {user_msg}\n"
+        export_text += f"**ルリ**: {ruri_msg}\n\n"
+    
+    st.download_button(
+        label="📄 履歴をダウンロード",
+        data=export_text,
+        file_name=f"ruri_chat_{datetime.datetime.now().strftime('%Y%m%d_%H%M')}.md",
+        mime="text/markdown"
+    )
 
 def show_character_page(user_level: UserLevel, features: Dict[str, bool]):
     """キャラクター状態ページ"""
