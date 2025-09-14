@@ -1282,3 +1282,14 @@ def show_stream_simulator():
 # メイン関数を常に実行（Streamlit環境でのみ正常動作）
 if __name__ == "__main__":
     main()
+    
+    # フッター - 権利関係の明示
+    st.markdown("---")
+    st.markdown("""
+    <div style='text-align: center; color: #666; font-size: 0.8em; margin-top: 2em;'>
+        <p>🎭 原作：戯曲『あいのいろ』（ozaki-taisuke） | 🎨 原画：まつはち さん</p>
+        <p>📋 <a href='https://github.com/ozaki-taisuke/pupa-Ruri/blob/main/docs/fan_creation_guidelines.md' target='_blank'>二次創作ガイドライン</a> | 
+        ⚠️ <a href='https://github.com/ozaki-taisuke/pupa-Ruri/blob/main/docs/artwork_usage_restrictions.md' target='_blank'>原画使用制限</a></p>
+        <p><small>⭐ 二次創作は自由に歓迎　⚠️ 原画の使用には個別許諾が必要です</small></p>
+    </div>
+    """, unsafe_allow_html=True)

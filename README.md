@@ -124,10 +124,20 @@ AITuber/
 - **作成者**: ozaki-taisuke
 
 ### 使用・改変について
-- 本プロジェクトのソースコードは自由に使用・改変できます
-- キャラクター「ルリ」は戯曲『あいのいろ』の登場人物のため、商用利用については事前にご相談ください
-- 戯曲の設定・世界観を尊重した利用をお願いします
-- アートワークの使用については、まつはち さんの利用規約に従ってください
+
+#### 🆓 自由に使用できるもの
+- **ソースコード**：MIT License - 自由に使用・改変・商用利用可能
+- **キャラクター設定**：ルリの基本設定・世界観は二次創作歓迎
+- **戯曲の世界観**：『あいのいろ』の設定を活用した創作活動
+
+#### ⚠️ 制限があるもの
+- **原画（image.png）**：まつはち さん作 - **使用には個別許諾が必要**
+- **商用利用**：大規模な商用化は事前相談をお願いします
+
+#### 📋 詳細ガイドライン
+- **二次創作ガイドライン**：[docs/fan_creation_guidelines.md](docs/fan_creation_guidelines.md)
+- **原画使用制限**：[docs/artwork_usage_restrictions.md](docs/artwork_usage_restrictions.md)
+- **商用利用申請**：[docs/commercial_license_application.md](docs/commercial_license_application.md)
 
 ## 🤝 コントリビューション
 
