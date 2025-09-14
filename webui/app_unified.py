@@ -128,20 +128,36 @@ def show_feature_restrictions(user_level: UserLevel, features: Dict[str, bool]):
     """機能制限の表示"""
     st.markdown("### 🔓 利用可能機能")
     
-    feature_categories = {
-        "基本機能": ["character_display", "basic_ui", "image_upload"],
-        "ベータ機能": ["ai_chat", "emotion_learning", "advanced_image_analysis"],
-        "開発者機能": ["obs_integration", "streaming_features", "api_access"],
-        "管理者機能": ["user_management", "system_settings", "analytics"]
-    }
-    
-    for category, feature_list in feature_categories.items():
-        if any(features.get(f, False) for f in feature_list):
-            st.markdown(f"**{category}**")
-            for feature in feature_list:
-                if feature in features:
-                    status = "✅" if features[feature] else "🔒"
-                    st.markdown(f"  {status} {feature.replace('_', ' ').title()}")
+    if user_level == UserLevel.OWNER:
+        st.success("👑 所有者モード - 全機能が利用可能です")
+        st.markdown("""
+        **利用可能機能:**
+        - ✅ キャラクター表示・操作
+        - ✅ AI会話・感情学習
+        - ✅ 高度な画像分析
+        - ✅ OBS Studio連携
+        - ✅ 配信管理機能
+        - ✅ システム設定管理
+        - ✅ ユーザー管理
+        - ✅ ログ・分析機能
+        """)
+    else:
+        st.info("🌐 一般公開モード")
+        st.markdown("""
+        **利用可能機能:**
+        - ✅ 基本キャラクター表示
+        - ✅ 画像アップロード（基本分析）
+        - ✅ システム情報表示
+        
+        **🔒 所有者専用機能:**
+        - ⚙️ AI会話・感情学習
+        - ⚙️ 高度な画像分析
+        - ⚙️ OBS連携・配信管理
+        - ⚙️ システム設定・管理機能
+        """)
+        
+        st.markdown("---")
+        st.info("💡 サイドバーから所有者パスワードで認証すると、全機能にアクセスできます")
 
 def display_main_content(page: str, user_level: UserLevel, features: Dict[str, bool], ui_config: Dict):
     """メインコンテンツの表示"""
@@ -149,9 +165,7 @@ def display_main_content(page: str, user_level: UserLevel, features: Dict[str, b
     # ヘッダー
     level_names = {
         UserLevel.PUBLIC: "一般公開版",
-        UserLevel.BETA: "ベータ版",
-        UserLevel.DEVELOPER: "開発者版",
-        UserLevel.ADMIN: "管理者版"
+        UserLevel.OWNER: "所有者版"
     }
     
     st.markdown(f"""
@@ -169,25 +183,25 @@ def display_main_content(page: str, user_level: UserLevel, features: Dict[str, b
     elif page == "image":
         show_image_page(user_level, features)
     elif page == "chat":
-        if UnifiedAuth.require_level(UserLevel.BETA):
+        if UnifiedAuth.require_level(UserLevel.OWNER):
             show_chat_page(user_level, features)
     elif page == "stats":
-        if UnifiedAuth.require_level(UserLevel.BETA):
+        if UnifiedAuth.require_level(UserLevel.OWNER):
             show_stats_page(user_level, features)
     elif page == "obs":
-        if UnifiedAuth.require_level(UserLevel.DEVELOPER):
+        if UnifiedAuth.require_level(UserLevel.OWNER):
             show_obs_page(user_level, features)
     elif page == "streaming":
-        if UnifiedAuth.require_level(UserLevel.DEVELOPER):
+        if UnifiedAuth.require_level(UserLevel.OWNER):
             show_streaming_page(user_level, features)
     elif page == "settings":
-        if UnifiedAuth.require_level(UserLevel.DEVELOPER):
+        if UnifiedAuth.require_level(UserLevel.OWNER):
             show_settings_page(user_level, features)
     elif page == "users":
-        if UnifiedAuth.require_level(UserLevel.ADMIN):
+        if UnifiedAuth.require_level(UserLevel.OWNER):
             show_user_management_page(user_level, features)
     elif page == "logs":
-        if UnifiedAuth.require_level(UserLevel.ADMIN):
+        if UnifiedAuth.require_level(UserLevel.OWNER):
             show_logs_page(user_level, features)
 
 def show_home_page(user_level: UserLevel, features: Dict[str, bool], ui_config: Dict):
@@ -212,19 +226,18 @@ def show_home_page(user_level: UserLevel, features: Dict[str, bool], ui_config: 
             st.write(f"• {feature}")
     
     with col2:
-        st.markdown("### 🎯 次のレベルで解放される機能")
+        st.markdown("### 🎯 所有者認証で解放される機能")
         if user_level == UserLevel.PUBLIC:
             st.write("• AI会話機能")
             st.write("• 感情学習システム")
             st.write("• 高度な画像分析")
-        elif user_level == UserLevel.BETA:
             st.write("• OBS Studio連携")
             st.write("• 配信管理機能")
-            st.write("• API アクセス")
-        elif user_level == UserLevel.DEVELOPER:
+            st.write("• システム設定管理")
             st.write("• ユーザー管理")
-            st.write("• システム設定")
             st.write("• 分析レポート")
+        else:
+            st.success("✅ 全機能が利用可能です！")
     
     # システム状態
     if ui_config['show_technical_details']:
@@ -383,7 +396,7 @@ def show_settings_page(user_level: UserLevel, features: Dict[str, bool]):
             st.error("⚠️ セキュア設定管理システムが利用できません。cryptographyとbcryptをインストールしてください。")
             st.code("pip install cryptography bcrypt")
     else:
-        st.info("🚧 開発者機能 - システム設定（基本版）")
+        st.info("🚧 所有者専用機能 - システム設定")
         
         st.markdown("### 📊 現在の設定状況")
         col1, col2 = st.columns(2)
@@ -398,9 +411,9 @@ def show_settings_page(user_level: UserLevel, features: Dict[str, bool]):
             total_count = len(features)
             st.write(f"利用可能: {available_count}/{total_count}")
         
-        if user_level != UserLevel.ADMIN:
-            st.info("🔒 詳細なシステム設定には管理者権限が必要です")
-            st.markdown("管理者パスワードでアップグレードすると、以下の機能が利用できます：")
+        if user_level != UserLevel.OWNER:
+            st.info("🔒 詳細なシステム設定には所有者権限が必要です")
+            st.markdown("所有者パスワードで認証すると、以下の機能が利用できます：")
             st.markdown("""
             - 🔐 認証パスワードの変更
             - 🔑 APIキーの管理

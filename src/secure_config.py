@@ -110,9 +110,7 @@ class SecureConfigManager:
         """デフォルト設定の取得"""
         return {
             "passwords": {
-                "BETA_PASSWORD": "",
-                "DEVELOPER_PASSWORD": "",
-                "ADMIN_PASSWORD": ""
+                "OWNER_PASSWORD": ""
             },
             "api_keys": {
                 "OPENAI_API_KEY": "",
@@ -171,39 +169,30 @@ def show_admin_settings_ui():
     tab1, tab2, tab3, tab4 = st.tabs(["🔐 認証設定", "🔑 API設定", "⚙️ 機能設定", "📊 システム情報"])
     
     with tab1:
-        st.header("認証パスワード設定")
-        st.info("💡 パスワードは暗号化されて保存されます。空欄の場合、そのレベルは無効になります。")
+        st.header("所有者パスワード設定")
+        st.info("💡 パスワードは暗号化されて保存されます。空欄の場合、所有者認証は無効になります。")
         
         col1, col2 = st.columns(2)
         
         with col1:
-            beta_password = st.text_input(
-                "🧪 ベータアクセス パスワード",
+            owner_password = st.text_input(
+                "� 所有者パスワード",
                 type="password",
-                help="ベータ機能（AI会話等）へのアクセス用",
-                key="new_beta_password"
-            )
-            
-            developer_password = st.text_input(
-                "👨‍💻 開発者アクセス パスワード",
-                type="password",
-                help="開発者機能（OBS連携等）へのアクセス用",
-                key="new_developer_password"
-            )
-            
-            admin_password = st.text_input(
-                "👑 管理者アクセス パスワード",
-                type="password",
-                help="システム管理機能へのアクセス用",
-                key="new_admin_password"
+                help="全機能へのアクセス用パスワード",
+                key="new_owner_password"
             )
         
         with col2:
             st.markdown("**現在の設定状況:**")
             passwords = current_config.get('passwords', {})
-            for level, stored_pass in passwords.items():
-                status = "✅ 設定済み" if stored_pass else "❌ 未設定"
-                st.write(f"- {level}: {status}")
+            owner_pass = passwords.get('OWNER_PASSWORD', '')
+            status = "✅ 設定済み" if owner_pass else "❌ 未設定"
+            st.write(f"- 所有者パスワード: {status}")
+            
+            if owner_pass:
+                st.success("🔒 所有者認証が有効です")
+            else:
+                st.warning("⚠️ 所有者パスワードが未設定です")
     
     with tab2:
         st.header("API キー設定")
@@ -323,9 +312,7 @@ def show_admin_settings_ui():
             # 新しい設定を構築
             new_config = {
                 "passwords": {
-                    "BETA_PASSWORD": beta_password if beta_password else current_config.get('passwords', {}).get('BETA_PASSWORD', ''),
-                    "DEVELOPER_PASSWORD": developer_password if developer_password else current_config.get('passwords', {}).get('DEVELOPER_PASSWORD', ''),
-                    "ADMIN_PASSWORD": admin_password if admin_password else current_config.get('passwords', {}).get('ADMIN_PASSWORD', '')
+                    "OWNER_PASSWORD": owner_password if owner_password else current_config.get('passwords', {}).get('OWNER_PASSWORD', '')
                 },
                 "api_keys": {
                     "OPENAI_API_KEY": openai_api_key if openai_api_key else config_manager.get_raw_api_key('OPENAI_API_KEY'),

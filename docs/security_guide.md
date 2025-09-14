@@ -58,9 +58,7 @@ pip install cryptography bcrypt
 2. **Settings → Secrets** で設定:
    ```toml
    # 強力なパスワードに変更してください
-   BETA_PASSWORD = "your-strong-beta-password-here"
-   DEVELOPER_PASSWORD = "your-strong-dev-password-here"  
-   ADMIN_PASSWORD = "your-strong-admin-password-here"
+   OWNER_PASSWORD = "your-strong-owner-password-here"
    
    # APIキー（必要な場合のみ）
    OPENAI_API_KEY = "your-openai-api-key-here"
@@ -69,9 +67,7 @@ pip install cryptography bcrypt
 #### **ローカル開発**
 1. `.env`ファイル作成（Gitには含まれません）:
    ```
-   BETA_PASSWORD=local-beta-password
-   DEVELOPER_PASSWORD=local-dev-password
-   ADMIN_PASSWORD=local-admin-password
+   OWNER_PASSWORD=local-owner-password
    OPENAI_API_KEY=your-openai-key
    ```
 
@@ -79,7 +75,7 @@ pip install cryptography bcrypt
 
 #### **管理者UIアクセス**
 1. 統一WebUIにアクセス
-2. 管理者パスワードで認証
+2. 所有者パスワードで認証
 3. 「システム設定」ページを選択
 4. 各種パスワード・APIキーを変更
 5. 「設定を保存」で即座に反映
@@ -118,4 +114,4 @@ pip install cryptography bcrypt
 ---
 
 **🎉 セキュリティ強化完了！**
-**機密情報は完全に保護され、管理者が自由に変更可能です。**
+**単一パスワードでシンプルかつ安全な認証システムを実現。**

@@ -5,10 +5,8 @@ from enum import Enum
 
 class UserLevel(Enum):
     """ユーザーアクセスレベル"""
-    PUBLIC = "public"           # 一般公開（認証なし）
-    BETA = "beta"              # ベータテスター（簡易認証）
-    DEVELOPER = "developer"     # 開発者（フル機能）
-    ADMIN = "admin"            # 管理者（全機能 + 管理機能）
+    PUBLIC = "public"          # 一般公開（認証なし）
+    OWNER = "owner"           # 所有者（全機能アクセス）
 
 class UnifiedConfig:
     """統一環境設定管理"""
@@ -26,25 +24,19 @@ class UnifiedConfig:
             import streamlit as st
             if hasattr(st, 'secrets'):
                 return {
-                    'BETA_PASSWORD': st.secrets.get('BETA_PASSWORD', ''),
-                    'DEVELOPER_PASSWORD': st.secrets.get('DEVELOPER_PASSWORD', ''),
-                    'ADMIN_PASSWORD': st.secrets.get('ADMIN_PASSWORD', '')
+                    'OWNER_PASSWORD': st.secrets.get('OWNER_PASSWORD', '')
                 }
         except Exception:
             pass
         
         # 環境変数から取得（デフォルトは空文字）
         return {
-            'BETA_PASSWORD': os.getenv('BETA_PASSWORD', ''),
-            'DEVELOPER_PASSWORD': os.getenv('DEVELOPER_PASSWORD', ''),
-            'ADMIN_PASSWORD': os.getenv('ADMIN_PASSWORD', '')
+            'OWNER_PASSWORD': os.getenv('OWNER_PASSWORD', '')
         }
     
     # 認証設定
     _passwords = get_passwords.__func__(None)
-    BETA_PASSWORD = _passwords['BETA_PASSWORD']
-    DEVELOPER_PASSWORD = _passwords['DEVELOPER_PASSWORD']
-    ADMIN_PASSWORD = _passwords['ADMIN_PASSWORD']
+    OWNER_PASSWORD = _passwords['OWNER_PASSWORD']
     
     # API設定（セキュア設定管理システム対応）
     @classmethod
@@ -83,81 +75,59 @@ class UnifiedConfig:
     @classmethod
     def get_user_level(cls, session_state) -> UserLevel:
         """セッション状態からユーザーレベルを取得"""
-        if session_state.get("admin_authenticated"):
-            return UserLevel.ADMIN
-        elif session_state.get("developer_authenticated"):
-            return UserLevel.DEVELOPER
-        elif session_state.get("beta_authenticated"):
-            return UserLevel.BETA
+        if session_state.get("owner_authenticated"):
+            return UserLevel.OWNER
         else:
             return UserLevel.PUBLIC
     
     @classmethod
     def get_available_features(cls, user_level: UserLevel) -> Dict[str, bool]:
         """ユーザーレベルに応じた利用可能機能"""
+        # 所有者認証時は全機能有効、未認証時は基本機能のみ
+        is_owner = (user_level == UserLevel.OWNER)
+        
         features = {
             # 基本機能（全ユーザー）
             "character_display": True,
             "basic_ui": True,
             "image_upload": True,
             
-            # ベータ機能
-            "ai_chat": user_level.value in ["beta", "developer", "admin"],
-            "emotion_learning": user_level.value in ["beta", "developer", "admin"],
-            "advanced_image_analysis": user_level.value in ["beta", "developer", "admin"],
-            
-            # 開発者機能
-            "obs_integration": user_level.value in ["developer", "admin"],
-            "streaming_features": user_level.value in ["developer", "admin"],
-            "api_access": user_level.value in ["developer", "admin"],
-            "debug_info": user_level.value in ["developer", "admin"],
-            
-            # 管理者機能
-            "user_management": user_level.value == "admin",
-            "system_settings": user_level.value == "admin",
-            "analytics": user_level.value == "admin",
-            "log_viewer": user_level.value == "admin",
+            # 所有者専用機能
+            "ai_chat": is_owner,
+            "emotion_learning": is_owner,
+            "advanced_image_analysis": is_owner,
+            "obs_integration": is_owner,
+            "streaming_features": is_owner,
+            "api_access": is_owner,
+            "debug_info": is_owner,
+            "user_management": is_owner,
+            "system_settings": is_owner,
+            "analytics": is_owner,
+            "log_viewer": is_owner,
         }
         return features
     
     @classmethod
     def get_ui_config(cls, user_level: UserLevel) -> Dict[str, Any]:
         """ユーザーレベルに応じたUI設定"""
-        configs = {
-            UserLevel.PUBLIC: {
+        if user_level == UserLevel.OWNER:
+            return {
+                "theme": "dark",
+                "sidebar_expanded": True,
+                "show_advanced_options": True,
+                "show_technical_details": True,
+                "header_color": "#6366f1",
+                "title_suffix": " - 所有者モード",
+            }
+        else:
+            return {
                 "theme": "light",
                 "sidebar_expanded": False,
                 "show_advanced_options": False,
                 "show_technical_details": False,
                 "header_color": "#667eea",
                 "title_suffix": "",
-            },
-            UserLevel.BETA: {
-                "theme": "light",
-                "sidebar_expanded": True,
-                "show_advanced_options": True,
-                "show_technical_details": False,
-                "header_color": "#ff6b6b",
-                "title_suffix": " - ベータ版",
-            },
-            UserLevel.DEVELOPER: {
-                "theme": "dark",
-                "sidebar_expanded": True,
-                "show_advanced_options": True,
-                "show_technical_details": True,
-                "header_color": "#4ecdc4",
-                "title_suffix": " - 開発者版",
-            },
-            UserLevel.ADMIN: {
-                "theme": "dark",
-                "sidebar_expanded": True,
-                "show_advanced_options": True,
-                "show_technical_details": True,
-                "header_color": "#f39c12",
-                "title_suffix": " - 管理者版",
             }
-        }
-        return configs.get(user_level, configs[UserLevel.PUBLIC])
     
     @classmethod
     def get_navigation_menu(cls, user_level: UserLevel) -> List[Dict[str, str]]:
@@ -168,24 +138,18 @@ class UnifiedConfig:
             {"icon": "🎨", "title": "画像分析", "page": "image"},
         ]
         
-        if user_level.value in ["beta", "developer", "admin"]:
-            base_menu.extend([
+        if user_level == UserLevel.OWNER:
+            # 所有者は全機能にアクセス可能
+            owner_menu = [
                 {"icon": "💬", "title": "AI会話", "page": "chat"},
                 {"icon": "📊", "title": "統計", "page": "stats"},
-            ])
-        
-        if user_level.value in ["developer", "admin"]:
-            base_menu.extend([
                 {"icon": "🎥", "title": "OBS連携", "page": "obs"},
                 {"icon": "📺", "title": "配信管理", "page": "streaming"},
-                {"icon": "⚙️", "title": "設定", "page": "settings"},
-            ])
-        
-        if user_level.value == "admin":
-            base_menu.extend([
+                {"icon": "⚙️", "title": "システム設定", "page": "settings"},
                 {"icon": "👥", "title": "ユーザー管理", "page": "users"},
                 {"icon": "📋", "title": "ログ", "page": "logs"},
-            ])
+            ]
+            base_menu.extend(owner_menu)
         
         return base_menu
     
