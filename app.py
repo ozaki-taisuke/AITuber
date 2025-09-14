@@ -310,14 +310,22 @@ def main():
         try:
             user_level = UnifiedConfig.get_user_level(st.session_state) if UnifiedConfig else "public"
             ui_config = UnifiedConfig.get_ui_config(user_level) if UnifiedConfig else {"title": "AITuber ルリ", "theme": "default"}
-            features = UnifiedConfig.get_available_features(user_level) if UnifiedConfig else {"ai_conversation": True, "character_status": False}
+            features = UnifiedConfig.get_available_features(user_level) if UnifiedConfig else {
+                "ai_conversation": True, 
+                "character_status": False,
+                "basic_image_analysis": False
+            }
         except Exception as e:
             if not CLOUD_MODE:
                 print(f"⚠️ 設定取得エラー: {e}")
             # フォールバック設定
             user_level = "public"
             ui_config = {"title": "AITuber ルリ", "theme": "default"}
-            features = {"ai_conversation": True, "character_status": False}
+            features = {
+                "ai_conversation": True, 
+                "character_status": False,
+                "basic_image_analysis": False
+            }
         
         # ユーザー情報ログ（一度だけ表示）
         if not CLOUD_MODE and not st.session_state.get('user_info_logged', False):
@@ -403,13 +411,17 @@ def main():
                     features = {
                         "character_status": False,  # 未実装のため無効化
                         "ai_conversation": True,
-                        "image_analysis": False,    # 未実装のため無効化
+                        "basic_image_analysis": False,    # 未実装のため無効化
                         "streaming_integration": False,  # 未実装のため無効化
                         "system_settings": False,  # 未実装のため無効化
                         "analytics": False         # 未実装のため無効化
                     }
                 else:
-                    features = {"ai_conversation": True, "character_status": False}
+                    features = {
+                        "ai_conversation": True, 
+                        "character_status": False,
+                        "basic_image_analysis": False
+                    }
             
             # 初期化完了フラグを設定（認証状態を保持）
             st.session_state.initialization_complete = True
@@ -423,7 +435,11 @@ def main():
     # セッションから設定を取得（フォールバック）
     user_level = st.session_state.get('user_level', UserLevel.PUBLIC if UserLevel else "public")
     ui_config = st.session_state.get('ui_config', {"title": "AITuber ルリ", "theme": "default"})
-    features = st.session_state.get('features', {"ai_conversation": True, "character_status": False})
+    features = st.session_state.get('features', {
+        "ai_conversation": True, 
+        "character_status": False,
+        "basic_image_analysis": False
+    })
     
     # レスポンシブ対応の初期設定
     setup_responsive_design()
@@ -479,7 +495,7 @@ def main():
         show_character_page(user_level, features)
     elif page == 'ai_conversation' and features.get('ai_conversation'):
         show_ai_conversation_page(user_level, features)
-    elif page == 'image_analysis' and features.get('image_analysis'):
+    elif page == 'image_analysis' and features.get('basic_image_analysis'):
         show_image_analysis_page(user_level, features)
     elif page == 'streaming' and features.get('streaming_integration'):
         show_streaming_page(user_level, features)
@@ -848,6 +864,14 @@ def setup_responsive_sidebar(user_level: Any, features: Dict[str, bool], ui_conf
         # 毎回新しいユニークIDを生成（セッション状態依存を排除）
         unique_id = f"{int(time.time() * 1000000)}_{random.randint(10000, 99999)}"
         
+        # Streamlit Cloud デバッグ情報（一時的）
+        if st.session_state.get('show_debug', False):
+            st.write("🔍 デバッグ情報:")
+            st.write(f"- user_level: {user_level}")
+            st.write(f"- features: {features}")
+            st.write(f"- character_status: {features.get('character_status', False)}")
+            st.write(f"- basic_image_analysis: {features.get('basic_image_analysis', False)}")
+        
         menu_items = [
             ("home", "🏠 ホーム", True),
             ("character", "👤 キャラクター状態", features.get('character_status', False)),
@@ -877,6 +901,12 @@ def setup_responsive_sidebar(user_level: Any, features: Dict[str, bool], ui_conf
         
         # 認証関連（改良版・ホットリロード対応）
         st.markdown("---")
+        
+        # デバッグ情報切り替え（開発用）
+        if st.button("🔍 デバッグ情報", key=f"debug_toggle_{unique_id}"):
+            st.session_state.show_debug = not st.session_state.get('show_debug', False)
+            st.rerun()
+        
         is_authenticated = st.session_state.get('authenticated', False)
         is_public = (hasattr(UserLevel, 'PUBLIC') and user_level == UserLevel.PUBLIC) or user_level == "public"
         
