@@ -20,13 +20,21 @@ AI_AVAILABLE = False
 IMAGE_PROCESSING_AVAILABLE = False
 PLOTTING_AVAILABLE = False
 
-try:
-    from ai_providers import registry, config_manager, get_configured_provider
-    from ai_providers.base_provider import EmotionType, ColorStage
-    from character_ai import RuriCharacter
-    AI_AVAILABLE = True
-except ImportError as e:
-    print(f"⚠️ AI機能の読み込みに失敗: {e}")
+# 軽量インポート: 必要時のみ読み込み
+def lazy_import_ai():
+    """AI機能の遅延インポート"""
+    global AI_AVAILABLE
+    if not AI_AVAILABLE:
+        try:
+            from ai_providers import registry, config_manager, get_configured_provider
+            from ai_providers.base_provider import EmotionType, ColorStage
+            from character_ai import RuriCharacter
+            AI_AVAILABLE = True
+            return True
+        except ImportError as e:
+            print(f"⚠️ AI機能の読み込みに失敗: {e}")
+            return False
+    return True
 
 try:
     import cv2
@@ -44,10 +52,27 @@ except ImportError:
 def main():
     """統一WebUIメイン関数"""
     
-    # ユーザーレベルの取得
-    user_level = UnifiedConfig.get_user_level(st.session_state)
-    ui_config = UnifiedConfig.get_ui_config(user_level)
-    features = UnifiedConfig.get_available_features(user_level)
+    # 初期化プロセスの表示
+    if 'initialization_complete' not in st.session_state:
+        with st.spinner('ルリちゃんシステムを起動中...'):
+            # ユーザーレベルの取得
+            user_level = UnifiedConfig.get_user_level(st.session_state)
+            ui_config = UnifiedConfig.get_ui_config(user_level)
+            features = UnifiedConfig.get_available_features(user_level)
+            
+            # 初期化完了フラグを設定
+            st.session_state.initialization_complete = True
+            st.session_state.user_level = user_level
+            st.session_state.ui_config = ui_config  
+            st.session_state.features = features
+        
+        # 初期化後にページをリフレッシュ
+        st.rerun()
+    
+    # セッションから設定を取得
+    user_level = st.session_state.user_level
+    ui_config = st.session_state.ui_config
+    features = st.session_state.features
     
     # レスポンシブ対応の初期設定
     setup_responsive_design()
@@ -447,14 +472,16 @@ def handle_chat_message(message: str, user_level: UserLevel, features: Dict[str,
     # チャット履歴の自動保存設定
     max_history = 50  # 最大保存履歴数
     
-    if AI_AVAILABLE and features.get("ai_conversation"):
+    if lazy_import_ai() and features.get("ai_conversation"):
         try:
-            # AI応答の生成
+            # AI応答の生成（遅延インポート）
+            from ai_providers import get_configured_provider
+            from character_ai import RuriCharacter
+            
             provider = get_configured_provider()
             if provider:
                 ruri = RuriCharacter()
-                response = ruri.respond_to_message(message)
-                ai_response = response.get("message", "申し訳ございません、今は応答できません...")
+                ai_response = ruri.generate_response(message)
             else:
                 ai_response = "🤖 AIプロバイダーが設定されていません"
         except Exception as e:
