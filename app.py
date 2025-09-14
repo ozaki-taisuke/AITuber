@@ -930,7 +930,7 @@ def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
                 max-width: 100%;
             ">
             """, unsafe_allow_html=True)
-            st.image(image_path, width=300, use_column_width='auto')
+            st.image(image_path, width=300, use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
         else:
             st.info("🎭 ルリの画像を読み込み中...")
