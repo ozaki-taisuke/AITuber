@@ -4,16 +4,57 @@ import sys
 import os
 from typing import Dict
 
-# プロジェクトパスの設定
+# プロジェクトパスの設定（本番環境対応強化）
+import sys
+import os
+from typing import Dict
+
+# より堅牢なパス設定
 project_root = os.path.dirname(os.path.abspath(__file__))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
+webui_dir = os.path.basename(project_root)
 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+# webuiフォルダ内にいる場合は親ディレクトリに移動
+if webui_dir == 'webui':
+    project_root = os.path.dirname(project_root)
 
-# 統一設定とセキュリティ
-from src.unified_config import UnifiedConfig, UserLevel
-from src.unified_auth import UnifiedAuth
+src_path = os.path.join(project_root, 'src')
+
+# パスの追加（重複チェック付き）
+for path in [project_root, src_path]:
+    if path not in sys.path:
+        sys.path.insert(0, path)
+
+# 統一設定とセキュリティ（エラーハンドリング付き）
+try:
+    from src.unified_config import UnifiedConfig, UserLevel
+    from src.unified_auth import UnifiedAuth
+    CONFIG_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ 設定モジュールの読み込みに失敗: {e}")
+    # フォールバック設定
+    class UserLevel:
+        PUBLIC = "public"
+        OWNER = "owner"
+    
+    class UnifiedConfig:
+        @staticmethod
+        def get_user_level(session_state):
+            return UserLevel.PUBLIC
+        
+        @staticmethod
+        def get_ui_config(user_level):
+            return {"title": "AITuber ルリ", "theme": "default"}
+        
+        @staticmethod
+        def get_available_features(user_level):
+            return {"ai_conversation": True, "character_status": True}
+    
+    class UnifiedAuth:
+        @staticmethod
+        def show_auth_interface():
+            pass
+    
+    CONFIG_AVAILABLE = False
 
 # 基本機能のインポート（エラーハンドリング付き）
 AI_AVAILABLE = False
@@ -26,15 +67,29 @@ def lazy_import_ai():
     global AI_AVAILABLE
     if not AI_AVAILABLE:
         try:
-            from ai_providers import registry, config_manager, get_configured_provider
-            from ai_providers.base_provider import EmotionType, ColorStage
-            from character_ai import RuriCharacter
+            from src.character_ai import RuriCharacter
             AI_AVAILABLE = True
             return True
         except ImportError as e:
             print(f"⚠️ AI機能の読み込みに失敗: {e}")
             return False
     return True
+
+def get_ruri_character():
+    """ルリキャラクターインスタンスの取得（フォールバック付き）"""
+    if lazy_import_ai():
+        try:
+            from src.character_ai import RuriCharacter
+            return RuriCharacter()
+        except Exception as e:
+            print(f"⚠️ ルリキャラクター初期化失敗: {e}")
+    
+    # フォールバック用ダミークラス
+    class DummyRuriCharacter:
+        def generate_response(self, message, image=None):
+            return "AI機能が利用できません。システム管理者にお問い合わせください。"
+    
+    return DummyRuriCharacter()
 
 try:
     import cv2
@@ -482,7 +537,7 @@ def handle_chat_message(message: str, user_level: UserLevel, features: Dict[str,
             
             provider = get_configured_provider()
             if provider:
-                ruri = RuriCharacter()
+                ruri = get_ruri_character()
                 ai_response = ruri.generate_response(message)
             else:
                 ai_response = "🤖 AIプロバイダーが設定されていません"
