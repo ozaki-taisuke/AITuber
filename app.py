@@ -54,7 +54,7 @@ def main():
     
     # 初期化プロセスの表示
     if 'initialization_complete' not in st.session_state:
-        with st.spinner('ルリちゃんシステムを起動中...'):
+        with st.spinner('Connecting pupa system...'):
             # ユーザーレベルの取得
             user_level = UnifiedConfig.get_user_level(st.session_state)
             ui_config = UnifiedConfig.get_ui_config(user_level)
