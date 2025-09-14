@@ -79,7 +79,7 @@ class UnifiedConfig:
             "character_display": True,
             "basic_ui": True,
             "image_upload": True,
-            "ai_conversation": True,     # AI会話機能を有効化
+            "ai_conversation": True,     # メインページでの会話機能は有効
             "character_status": False,   # 未実装のため無効化
             
             # 限定開放機能（パブリックでも利用可能）

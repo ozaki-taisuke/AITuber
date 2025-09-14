@@ -70,7 +70,7 @@ class UnifiedAuth:
                     placeholder="所有者パスワードを入力"
                 )
                 
-                if st.button("🚀 認証", use_container_width=True):
+                if st.button("🚀 認証"):
                     if upgrade_password:
                         new_level = UnifiedAuth.authenticate_user(upgrade_password)
                         if new_level and new_level == UserLevel.OWNER:
@@ -85,7 +85,7 @@ class UnifiedAuth:
                         st.warning("⚠️ パスワードを入力してください")
             else:
                 # ログアウトオプション
-                if st.button("� ログアウト", use_container_width=True):
+                if st.button("🚪 ログアウト"):
                     UnifiedAuth.logout()
                     st.success("✅ ログアウトしました")
                     st.rerun()

@@ -335,13 +335,13 @@ def main():
         # ホーム、AI会話は常にアクセス可能
         public_pages = ['home', 'ai_conversation', 'character']
         
-        if current_page in public_pages or is_owner:
-            # アクセス許可 - 通常処理を継続
-            pass
-        elif st.session_state.get('show_auth', False):
-            # 明示的に認証画面を要求された場合
+        # 明示的に認証画面を要求された場合は最優先
+        if st.session_state.get('show_auth', False):
             show_auth_page()
             return
+        elif current_page in public_pages or is_owner:
+            # アクセス許可 - 通常処理を継続
+            pass
         else:
             # 認証が必要なページにアクセスしようとした場合のみ認証画面表示
             if current_page not in public_pages:
@@ -851,7 +851,7 @@ def setup_responsive_sidebar(user_level: Any, features: Dict[str, bool], ui_conf
         menu_items = [
             ("home", "🏠 ホーム", True),
             ("character", "👤 キャラクター状態", features.get('character_status', False)),
-            ("ai_conversation", "💬 ルリと話す", features.get('ai_conversation', True)),
+            ("ai_conversation", "💬 ルリと話す", False),  # ボタンを無効化
             ("image_analysis", "🖼️ 画像分析", features.get('basic_image_analysis', False)),
             ("streaming", "📺 配信管理", features.get('streaming_integration', False)),
             ("settings", "⚙️ 設定", features.get('system_settings', False)),
@@ -878,12 +878,13 @@ def setup_responsive_sidebar(user_level: Any, features: Dict[str, bool], ui_conf
         is_public = (hasattr(UserLevel, 'PUBLIC') and user_level == UserLevel.PUBLIC) or user_level == "public"
         
         if (is_public and not is_authenticated):
-            if st.button("🔐 所有者認証", key=f"auth_login_{unique_id}", width="stretch"):
+            auth_clicked = st.button("🔐 所有者認証", key="sidebar_auth_button")
+            if auth_clicked:
                 st.session_state.show_auth = True
-                # 認証画面表示のみrerunが必要
                 st.rerun()
         else:
-            if st.button("🚪 ログアウト", key=f"auth_logout_{unique_id}", width="stretch"):
+            logout_clicked = st.button("🚪 ログアウト", key="sidebar_logout_button")
+            if logout_clicked:
                 try:
                     UnifiedAuth().logout(st.session_state)
                 except:
@@ -913,25 +914,32 @@ def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
     # レスポンシブ対応：画像とキャラクター設定の配置
     image_path = os.path.join(project_root, "assets", "ruri_imageboard.png")
     
-    # レスポンシブレイアウト（デスクトップ：横並び、モバイル：縦並び）
-    col1, col2 = st.columns([1, 1])
+    # レスポンシブレイアウト（強化版）
+    st.markdown("""
+    <style>
+    .main-content-container {
+        max-width: 1000px !important;
+        margin: 0 auto !important;
+        padding: 1rem !important;
+    }
+    .stColumn {
+        padding: 0 1rem !important;
+    }
+    .stImage > img {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    </style>
+    <div class="main-content-container">
+    """, unsafe_allow_html=True)
+    
+    col1, col2 = st.columns([1, 1], gap="medium")
     
     with col1:
         st.markdown("#### 🎭 ルリ")
         if os.path.exists(image_path):
-            # レスポンシブ画像コンテナ
-            st.markdown("""
-            <div style="
-                display: flex; 
-                justify-content: center; 
-                align-items: center; 
-                margin: 1rem auto; 
-                padding: 0 1rem;
-                max-width: 100%;
-            ">
-            """, unsafe_allow_html=True)
-            st.image(image_path, width=300, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+            # シンプルな画像表示（最新のStreamlit推奨方法）
+            st.image(image_path, caption="")
         else:
             st.info("🎭 ルリの画像を読み込み中...")
     
@@ -956,6 +964,9 @@ def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
             st.markdown("**原作**: 戯曲『あいのいろ』")
             st.markdown("**作者**: 尾崎太祐 / Otty")
             st.markdown("**キャラクターデザイン**: まつはち")
+    
+    # レスポンシブコンテナ終了
+    st.markdown("</div>", unsafe_allow_html=True)
     
     # 会話エリア（シンプル版）
     st.markdown("### 💬 ルリと話す")

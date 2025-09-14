@@ -308,7 +308,7 @@ def show_admin_settings_ui():
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
-        if st.button("💾 設定を保存", type="primary", use_container_width=True):
+        if st.button("💾 設定を保存", type="primary"):
             # 新しい設定を構築
             new_config = {
                 "passwords": {

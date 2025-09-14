@@ -359,25 +359,9 @@ def render_compact_chat(user_level: Any, features: Dict[str, bool],
         st.markdown("##### 📝 メッセージ送信")
         chat_ui.render_message_input(user_level, features, "ルリに話しかけてみてください...")
         
-        # 区切り線
-        st.markdown("---")
-        
         # 履歴表示（将来の拡張ポイント）
         # st.markdown("##### 📜 会話履歴")
         # chat_ui.render_chat_history(max_display)
-        
-        # 一時的なメッセージ
-        st.info("💭 会話履歴機能は開発中です", icon="🔧")
-        
-        # 管理ボタンは最下部（将来の拡張ポイント）
-        st.markdown("---")
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            # TODO: 履歴機能実装時に有効化
-            st.button("クリア（開発中）", key=f"compact_clear_{container_key}", disabled=True)
-        with col2:
-            messages = chat_ui.chat_manager.get_history()
-            st.caption(f"会話数: {len(messages)}")
 
 def render_full_chat_page(user_level: Any, features: Dict[str, bool]):
     """専用チャットページの表示"""
