@@ -848,7 +848,7 @@ def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
     # メイン画像とタイトル
     st.markdown("""
     <div style="text-align: center; margin-bottom: 2rem;">
-        <h1 style="color: #4a90e2; margin-bottom: 0.5rem;">🌟 AITuber ルリ</h1>
+        <h1 style="color: #4a90e2; margin-bottom: 0.5rem;">🌟 pupa: ルリ</h1>
         <p style="color: #666; font-size: 1.1rem;">戯曲『あいのいろ』から生まれた感情学習AI</p>
     </div>
     """, unsafe_allow_html=True)
