@@ -28,6 +28,7 @@ class ProductionConfig:
     ENABLE_AI_FEATURES = os.getenv('ENABLE_AI_FEATURES', 'True').lower() == 'true'
     ENABLE_OBS_INTEGRATION = os.getenv('ENABLE_OBS_INTEGRATION', 'False').lower() == 'true'
     ENABLE_STREAMING_FEATURES = os.getenv('ENABLE_STREAMING_FEATURES', 'False').lower() == 'true'
+    BETA_AUTH_REQUIRED = os.getenv('BETA_AUTH_REQUIRED', 'False').lower() == 'true'
     
     # UI設定
     SHOW_TECHNICAL_DETAILS = DEBUG

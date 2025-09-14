@@ -38,12 +38,25 @@ pip install -r requirements.txt
 
 ### 2. WebUI起動
 
+#### ローカル環境
 ```bash
 # Streamlit WebUIを起動
 python -m streamlit run webui/app.py
 ```
 
 ブラウザで `http://localhost:8501` または `http://localhost:8502` にアクセス
+
+#### Cloudflare Pages デプロイ
+```bash
+# 1. Cloudflare Dashboard でプロジェクト作成
+# 2. GitHubリポジトリを連携
+# 3. 環境変数を設定:
+#    ENVIRONMENT=production
+#    DEBUG=False
+#    BETA_AUTH_REQUIRED=False
+```
+
+詳細な手順: [Cloudflare Pages セットアップガイド](docs/cloudflare_pages_setup.md)
 
 ### 3. 各機能の使い方
 

@@ -27,9 +27,10 @@ except ImportError as e:
 def main():
     """ベータ版メイン関数"""
     
-    # ベータ版認証
-    if not check_beta_access():
-        return
+    # ベータ版認証（環境変数で制御）
+    if ProductionConfig.BETA_AUTH_REQUIRED:
+        if not check_beta_access():
+            return
     
     # ページ設定
     st.set_page_config(
@@ -39,8 +40,9 @@ def main():
         initial_sidebar_state="expanded"
     )
     
-    # ベータ版ヘッダー
-    show_beta_header()
+    # ベータ版ヘッダー（認証が有効な場合のみ表示）
+    if ProductionConfig.BETA_AUTH_REQUIRED:
+        show_beta_header()
     
     # 設定情報の取得
     config = ProductionConfig.get_config()

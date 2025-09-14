@@ -1,0 +1,17 @@
+# _redirects file for Cloudflare Pages
+# Handle Streamlit routing
+
+# Redirect root to the Streamlit app
+/  /webui/app_beta.py  200
+
+# Handle Streamlit WebSocket connections
+/_stcore/*  /_stcore/:splat  200
+
+# Handle static files
+/static/*  /static/:splat  200
+
+# Handle API routes (if any)
+/api/*  /api/:splat  200
+
+# Fallback for SPA routing
+/*  /index.html  200

@@ -1,0 +1,23 @@
+# Cloudflare Pages 用デプロイ設定
+[build]
+command = "pip install -r requirements.txt"
+publish = "."
+
+[build.environment]
+PYTHON_VERSION = "3.11"
+NODE_VERSION = "18"
+
+# Streamlit 固有の設定
+[env.production]
+STREAMLIT_SERVER_PORT = 8501
+STREAMLIT_SERVER_ADDRESS = "0.0.0.0"
+STREAMLIT_SERVER_HEADLESS = true
+STREAMLIT_BROWSER_GATHER_USAGE_STATS = false
+
+# アプリケーション設定
+ENVIRONMENT = "production"
+DEBUG = "False"
+ENABLE_AI_FEATURES = "True"
+ENABLE_OBS_INTEGRATION = "False"
+ENABLE_STREAMING_FEATURES = "False"
+BETA_AUTH_REQUIRED = "False"
