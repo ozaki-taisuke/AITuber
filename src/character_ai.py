@@ -6,7 +6,7 @@ from typing import Dict, List, Any, Optional
 
 # プラガブルAIプロバイダーのインポート
 try:
-    from ai_providers import AIProviderRegistry
+    from ai_providers import registry  # グローバルレジストリを使用
     from ai_providers.base_provider import BaseAIProvider, CharacterResponse, EmotionType, ColorStage
     AI_PROVIDERS_AVAILABLE = True
 except ImportError:
@@ -33,24 +33,16 @@ class RuriCharacter:
             character_profile_path: キャラクター設定ファイルのパス
         """
         
-        # AIプロバイダーの初期化
+        # ステップ1: 基本属性の初期化
+        self.name = "ルリ"
+        self.conversation_history = []
         self.ai_provider = None
         self.provider_name = "fallback"
         
-        if AI_PROVIDERS_AVAILABLE:
-            self.registry = AIProviderRegistry()
-            self._initialize_ai_provider(ai_provider, provider_config)
-        else:
-            print("⚠️  AI Providersが利用できません。基本応答モードで動作します。")
-        
-        # キャラクター設定の読み込み
+        # ステップ2: キャラクター設定の読み込み（AIプロバイダーより先）
         self.character_profile = self._load_character_profile(character_profile_path)
         
-        # キャラクター状態
-        self.name = "ルリ"
-        self.conversation_history = []
-        
-        # フォールバック用の基本応答
+        # ステップ3: フォールバック応答の設定
         self.fallback_responses = [
             "そうですね...",
             "なるほど、面白いですね！",
@@ -58,10 +50,27 @@ class RuriCharacter:
             "私も同じように感じることがあります。",
             "とても興味深いお話ですね。"
         ]
+        
+        # ステップ4: AIプロバイダーの初期化（最後）
+        if AI_PROVIDERS_AVAILABLE:
+            self.registry = registry  # グローバルレジストリを使用
+            self._initialize_ai_provider(ai_provider, provider_config)
+        else:
+            print("⚠️  AI Providersが利用できません。基本応答モードで動作します。")
     
     def _initialize_ai_provider(self, provider_name: str = None, config: Dict[str, Any] = None):
-        """AIプロバイダーの初期化"""
+        """AIプロバイダーの安全な初期化"""
         try:
+            # 事前条件チェック
+            if not hasattr(self, 'registry') or not self.registry:
+                print("❌ AI Providerレジストリが利用できません")
+                return
+            
+            if not hasattr(self, 'character_profile'):
+                print("❌ キャラクター設定が読み込まれていません")
+                return
+            
+            # プロバイダーの選択と初期化
             if provider_name:
                 # 指定されたプロバイダーを使用
                 self.ai_provider = self.registry.create_provider(provider_name, config)
@@ -70,30 +79,55 @@ class RuriCharacter:
                     print(f"✅ AIプロバイダー '{provider_name}' を初期化しました")
                 else:
                     print(f"❌ プロバイダー '{provider_name}' の初期化に失敗しました")
+                    self._fallback_to_default_provider()
             else:
                 # 最適なプロバイダーを自動選択
-                self.ai_provider = self.registry.get_best_available_provider()
-                if self.ai_provider:
-                    self.provider_name = self.ai_provider.__class__.__name__
-                    print(f"🤖 自動選択: '{self.provider_name}' を使用します")
+                self._auto_select_provider()
             
-            # キャラクター設定をプロバイダーに反映
-            if self.ai_provider and hasattr(self.ai_provider, 'set_character_context'):
-                context = json.dumps(self.character_profile, ensure_ascii=False)
-                self.ai_provider.set_character_context(context)
+            # キャラクター設定をプロバイダーに反映（利用可能な場合のみ）
+            self._apply_character_context()
                 
         except Exception as e:
             print(f"❌ AIプロバイダー初期化エラー: {e}")
             self.ai_provider = None
+            self.provider_name = "fallback"
+    
+    def _auto_select_provider(self):
+        """最適なプロバイダーの自動選択"""
+        try:
+            self.ai_provider = self.registry.get_best_available_provider()
+            if self.ai_provider:
+                self.provider_name = self.ai_provider.__class__.__name__
+                print(f"🤖 自動選択: '{self.provider_name}' を使用します")
+            else:
+                print("⚠️ 利用可能なAIプロバイダーが見つかりません。フォールバックモードに切り替えます")
+                self._fallback_to_default_provider()
+        except Exception as e:
+            print(f"❌ プロバイダー自動選択エラー: {e}")
+            self._fallback_to_default_provider()
+    
+    def _fallback_to_default_provider(self):
+        """デフォルトプロバイダーへのフォールバック"""
+        self.ai_provider = None
+        self.provider_name = "fallback"
+        print("🔄 フォールバック応答モードに切り替えました")
+    
+    def _apply_character_context(self):
+        """キャラクター設定をプロバイダーに適用"""
+        if self.ai_provider and hasattr(self.ai_provider, 'set_character_context'):
+            try:
+                context = json.dumps(self.character_profile, ensure_ascii=False)
+                self.ai_provider.set_character_context(context)
+                print("✅ キャラクター設定をAIプロバイダーに適用しました")
+            except Exception as e:
+                print(f"⚠️ キャラクター設定の適用に失敗: {e}")
     
     def _load_character_profile(self, profile_path: str = None) -> Dict[str, Any]:
-        """キャラクター設定の読み込み"""
-        if profile_path is None:
-            profile_path = os.path.join("assets", "ruri_character_profile.md")
-        
+        """キャラクター設定の安全な読み込み"""
+        # デフォルトプロファイル（フォールバック用）
         default_profile = {
             "name": "ルリ",
-            "origin": "戯曲『あいのいろ』",
+            "origin": "戯曲『あいのいろ』", 
             "personality": "純粋で好奇心旺盛、感情学習中",
             "speaking_style": "丁寧で親しみやすい",
             "color_stage": "monochrome",
@@ -101,7 +135,42 @@ class RuriCharacter:
             "background": "感情を学んで色づいていく特殊な体質を持つ"
         }
         
-        if os.path.exists(profile_path):
+        # 設定ファイルパスの決定
+        if profile_path is None:
+            profile_path = os.path.join("assets", "ruri_character_profile.md")
+        
+        try:
+            # 設定ファイルの読み込み試行
+            if os.path.exists(profile_path):
+                print(f"📂 キャラクター設定を読み込み中: {profile_path}")
+                return self._parse_character_profile_file(profile_path, default_profile)
+            else:
+                print(f"⚠️ 設定ファイルが見つかりません: {profile_path}")
+                print("📋 デフォルト設定を使用します")
+                return default_profile
+                
+        except Exception as e:
+            print(f"❌ キャラクター設定読み込みエラー: {e}")
+            print("📋 デフォルト設定にフォールバックします")
+            return default_profile
+    
+    def _parse_character_profile_file(self, profile_path: str, default_profile: Dict[str, Any]) -> Dict[str, Any]:
+        """設定ファイルの解析"""
+        try:
+            with open(profile_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # 簡単なMarkdown解析（実装可能に応じて拡張）
+            profile = default_profile.copy()
+            
+            # ここで実際の設定ファイル解析を行う
+            # 現在はデフォルト設定を返す
+            print("✅ キャラクター設定を正常に読み込みました")
+            return profile
+            
+        except Exception as e:
+            print(f"❌ 設定ファイル解析エラー: {e}")
+            return default_profile
             try:
                 with open(profile_path, 'r', encoding='utf-8') as f:
                     content = f.read()

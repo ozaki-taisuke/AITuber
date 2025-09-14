@@ -3,6 +3,11 @@ import os
 from typing import Dict, Any, List
 from enum import Enum
 
+try:
+    from .api_config import APIConfig
+except ImportError:
+    from api_config import APIConfig
+
 class UserLevel(Enum):
     """ユーザーアクセスレベル"""
     PUBLIC = "public"          # 一般公開（認証なし）
@@ -41,40 +46,15 @@ class UnifiedConfig:
     OWNER_PASSWORD = _passwords['OWNER_PASSWORD']
     OWNER_USERNAME = _passwords['OWNER_USERNAME']
     
-    # API設定（セキュア設定管理システム対応）
+    # API設定（新しいAPIConfig使用）
     @classmethod
     def get_api_keys(cls) -> Dict[str, str]:
-        """APIキーを取得（Streamlit Secrets優先）"""
-        api_keys = {}
-        
-        # OpenAI APIキーの取得
-        try:
-            # Streamlit secrets から優先的に取得
-            import streamlit as st
-            if hasattr(st, 'secrets') and 'OPENAI_API_KEY' in st.secrets:
-                api_keys['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
-            else:
-                # 環境変数から取得
-                api_keys['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY', '')
-        except Exception:
-            # エラー時は環境変数から取得
-            api_keys['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY', '')
-        
-        # セキュア設定管理システムからも取得を試行（後方互換性）
-        try:
-            from src.secure_config import get_config_manager
-            config_manager = get_config_manager()
-            secure_key = config_manager.get_raw_api_key('OPENAI_API_KEY')
-            if secure_key and not api_keys.get('OPENAI_API_KEY'):
-                api_keys['OPENAI_API_KEY'] = secure_key
-        except Exception:
-            pass
-        
-        return api_keys
+        """APIキーを取得（統一設定管理）"""
+        return APIConfig.get_all_api_keys()
     
     # API設定
     _api_keys = get_api_keys.__func__(None)
-    OPENAI_API_KEY = _api_keys['OPENAI_API_KEY']
+    OPENAI_API_KEY = APIConfig.get_openai_api_key()
     
     # アプリケーション設定
     APP_NAME = "AITuber ルリ"

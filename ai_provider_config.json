@@ -1,17 +1,17 @@
 {
   "gpt-oss": {
-    "enabled": true,
+    "enabled": false,
     "priority": 1,
     "config": {
       "model": "gpt-oss:20b"
     }
   },
   "openai": {
-    "enabled": false,
-    "priority": 2,
+    "enabled": true,
+    "priority": 1,
     "config": {
       "model": "gpt-3.5-turbo",
-      "api_key": ""
+      "api_key": "YOUR_API_KEY_HERE"
     }
   },
   "huggingface": {

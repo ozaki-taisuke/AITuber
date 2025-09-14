@@ -55,29 +55,34 @@ CONFIG_AVAILABLE = False
 UserLevel = None
 UnifiedConfig = None
 UnifiedAuth = None
+APIConfig = None
 
 def initialize_config_modules():
     """設定モジュールの初期化（リロード対応）"""
-    global CONFIG_AVAILABLE, UserLevel, UnifiedConfig, UnifiedAuth
+    global CONFIG_AVAILABLE, UserLevel, UnifiedConfig, UnifiedAuth, APIConfig
     
     try:
         # 複数のインポート方法を試行
         try:
             from src.unified_config import UnifiedConfig as UC, UserLevel as UL
             from src.unified_auth import UnifiedAuth as UA
+            from src.api_config import APIConfig as AC
         except ImportError:
             try:
                 from unified_config import UnifiedConfig as UC, UserLevel as UL
                 from unified_auth import UnifiedAuth as UA
+                from api_config import APIConfig as AC
             except ImportError:
                 # 最後の手段として直接パス指定
                 sys.path.insert(0, os.path.join(project_root, 'src'))
                 from unified_config import UnifiedConfig as UC, UserLevel as UL
                 from unified_auth import UnifiedAuth as UA
+                from api_config import APIConfig as AC
         
         # 成功時に変数に代入
         UnifiedConfig = UC
-        UserLevel = UL  
+        UserLevel = UL
+        APIConfig = AC  
         UnifiedAuth = UA
         CONFIG_AVAILABLE = True
         return True
@@ -873,8 +878,8 @@ def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
     # APIキー確認（非表示）
     has_api_key = False
     try:
-        api_keys = UnifiedConfig.get_api_keys()
-        has_api_key = bool(api_keys.get('OPENAI_API_KEY'))
+        # 新しいAPIConfigを使用
+        has_api_key = bool(APIConfig.get_openai_api_key())
     except Exception:
         pass
     

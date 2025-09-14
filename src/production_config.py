@@ -2,15 +2,24 @@
 import os
 from typing import Dict, Any
 
+try:
+    from .api_config import APIConfig
+except ImportError:
+    from api_config import APIConfig
+
 class ProductionConfig:
     """本番環境用の設定管理"""
     
     # デバッグモード（本番では False）
     DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
     
-    # AI API設定（環境変数から取得）
-    OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
-    OLLAMA_BASE_URL = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
+    # AI API設定（APIConfigから取得）
+    @classmethod
+    def get_openai_api_key(cls) -> str:
+        """OpenAI APIキーを取得"""
+        return APIConfig.get_openai_api_key()
+    
+    OLLAMA_BASE_URL = APIConfig.get_ollama_base_url()
     
     # データベース設定（将来用）
     DATABASE_URL = os.getenv('DATABASE_URL', '')
@@ -56,7 +65,7 @@ class ProductionConfig:
         """利用可能なAIプロバイダーを返す"""
         providers = ['simple']  # 基本プロバイダーは常に利用可能
         
-        if cls.OPENAI_API_KEY:
+        if cls.get_openai_api_key():
             providers.append('openai')
         
         if cls.ENABLE_AI_FEATURES:
