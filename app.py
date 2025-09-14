@@ -912,7 +912,7 @@ def show_home_page(user_level: Any, features: Dict[str, bool], ui_config: Dict):
     st.markdown("---")
     st.markdown(
         "<div style='text-align: center; color: #666; font-size: 0.8em; margin-top: 2rem;'>"
-        "原作・企画: ozaki-taisuke（戯曲『あいのいろ』） | アートワーク: まつはち | "
+        "原作・企画: 尾崎太祐 / Otty（戯曲『あいのいろ』） | キャラクターデザイン原案: まつはち | "
         "<a href='https://github.com/ozaki-taisuke/pupa-Ruri' target='_blank' style='color: #666;'>GitHub</a>"
         "</div>", 
         unsafe_allow_html=True
