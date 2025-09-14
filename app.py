@@ -872,14 +872,15 @@ def setup_responsive_sidebar(user_level: Any, features: Dict[str, bool], ui_conf
             st.write(f"- character_status: {features.get('character_status', False)}")
             st.write(f"- basic_image_analysis: {features.get('basic_image_analysis', False)}")
         
+        # 強制的に無効化設定を適用（Streamlit Cloud対策）
         menu_items = [
             ("home", "🏠 ホーム", True),
-            ("character", "👤 キャラクター状態", features.get('character_status', False)),
+            ("character", "👤 キャラクター状態", False),  # 強制無効化
             ("ai_conversation", "💬 ルリと話す", False),  # ボタンを無効化
-            ("image_analysis", "🖼️ 画像分析", features.get('basic_image_analysis', False)),
-            ("streaming", "📺 配信管理", features.get('streaming_integration', False)),
-            ("settings", "⚙️ 設定", features.get('system_settings', False)),
-            ("analytics", "📊 分析", features.get('analytics', False))
+            ("image_analysis", "🖼️ 画像分析", False),  # 強制無効化
+            ("streaming", "📺 配信管理", False),  # 強制無効化
+            ("settings", "⚙️ 設定", False),  # 強制無効化
+            ("analytics", "📊 分析", False)  # 強制無効化
         ]
         
         for page_key, page_name, enabled in menu_items:

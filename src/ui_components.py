@@ -157,8 +157,8 @@ class ChatUI:
         #     is_latest = (i == 0) and show_latest_highlight
         #     self._render_single_conversation_turn(message, is_latest)
         
-        # 一時的な代替表示
-        st.info("💭 会話履歴機能は開発中です（LocalStorage/リモートサーバー対応予定）", icon="🔧")
+        # 履歴表示を完全に無効化（Streamlit Cloud対応）
+        pass
     
     def _render_single_conversation_turn(self, message: ChatMessage, is_latest: bool = False):
         """

@@ -58,7 +58,7 @@ class UnifiedConfig:
     
     # アプリケーション設定
     APP_NAME = "AITuber ルリ"
-    APP_VERSION = "1.0.0-unified"
+    APP_VERSION = "1.0.1-hotfix"  # キャッシュクリア用バージョンアップ
     
     @classmethod
     def get_user_level(cls, session_state) -> UserLevel:
