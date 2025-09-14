@@ -9,7 +9,6 @@ class ProductionConfig:
     DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
     
     # セキュリティ設定
-    SECRET_KEY = os.getenv('SECRET_KEY', 'ruri-default-secret-change-in-production')
     BETA_PASSWORD = os.getenv('BETA_PASSWORD', 'ruri_beta_2024')
     
     # AI API設定（環境変数から取得）

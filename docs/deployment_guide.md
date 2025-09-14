@@ -77,7 +77,6 @@
 ENVIRONMENT=production
 DEBUG=False
 BETA_PASSWORD=your-secure-password-here
-SECRET_KEY=your-secret-key-here
 ```
 
 ### オプション環境変数
