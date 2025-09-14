@@ -1,21 +1,25 @@
-opencv-python>=4.8.0
-Pillow>=10.0.0
-openai>=0.28.0
 streamlit>=1.28.0
 numpy>=1.24.0
-websocket-client>=1.6.0
-obs-websocket-py>=0.5.3
-plotly>=5.17.0
 pandas>=2.0.0
-
-# GPT-OSS統合のための依存関係
-gpt-oss>=0.0.6
-openai-harmony>=0.1.0
+pillow>=10.0.0
+plotly>=5.17.0
 requests>=2.31.0
 
-# Ollamaクライアント (推奨アプローチ)
-ollama>=0.1.0
+# OpenAI (オプション)
+openai>=0.28.0
 
-# 代替実装 (オプション)
-# transformers>=4.36.0
-# torch>=2.1.0
+# OpenCV (軽量版を使用)
+opencv-python-headless>=4.8.0
+
+# WebSocket (オプション - 必要な場合のみ)
+# websocket-client>=1.6.0
+
+# OBS連携 (ベータ版では無効)
+# obs-websocket-py>=0.5.3
+
+# GPT-OSS (オプション - インストールできない場合は除外)
+# gpt-oss>=0.0.6
+# openai-harmony>=0.1.0
+
+# Ollama (オプション - インストールできない場合は除外)
+# ollama>=0.1.0

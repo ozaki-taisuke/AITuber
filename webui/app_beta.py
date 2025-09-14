@@ -14,15 +14,34 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 from src.production_config import ProductionConfig
 from src.beta_auth import check_beta_access, show_beta_header, show_beta_feedback
 
-# 基本機能のインポート
+# 基本機能のインポート（エラーハンドリング強化）
+AI_AVAILABLE = False
+IMAGE_PROCESSING_AVAILABLE = False
+
 try:
     from ai_providers import registry, config_manager, get_configured_provider
     from ai_providers.base_provider import EmotionType, ColorStage
     from character_ai import RuriCharacter
     AI_AVAILABLE = True
 except ImportError as e:
-    st.error(f"⚠️ AI機能の読み込みに失敗: {e}")
+    print(f"⚠️ AI機能の読み込みに失敗: {e}")
     AI_AVAILABLE = False
+
+try:
+    import cv2
+    import numpy as np
+    IMAGE_PROCESSING_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ 画像処理機能の読み込みに失敗: {e}")
+    IMAGE_PROCESSING_AVAILABLE = False
+
+# プロット機能の条件付き読み込み
+PLOTTING_AVAILABLE = False
+try:
+    import plotly.graph_objects as go
+    PLOTTING_AVAILABLE = True
+except ImportError:
+    print("⚠️ Plotly機能は無効です")
 
 def main():
     """ベータ版メイン関数"""
@@ -232,6 +251,10 @@ def show_image_page():
     """画像分析ページ"""
     st.title("🎨 画像の色彩分析")
     
+    if not IMAGE_PROCESSING_AVAILABLE:
+        st.warning("⚠️ 画像処理ライブラリ（OpenCV）が利用できません")
+        st.info("基本的な画像表示機能のみ利用可能です")
+    
     st.markdown("### 📸 画像をアップロードして色彩分析")
     
     uploaded_file = st.file_uploader(
@@ -244,18 +267,60 @@ def show_image_page():
         # 画像表示
         st.image(uploaded_file, caption="アップロード画像", use_column_width=True)
         
-        # 簡易分析結果（モック）
-        st.markdown("### 🔍 分析結果")
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.metric("主要色相", "180° (青系)", help="画像の主な色相")
-        with col2:
-            st.metric("彩度", "75%", help="色の鮮やかさ")
-        with col3:
-            st.metric("明度", "60%", help="色の明るさ")
-        
-        st.info("🚧 ベータ版では簡略化された分析結果を表示しています")
+        if IMAGE_PROCESSING_AVAILABLE:
+            # 実際の画像分析（OpenCVが利用可能な場合）
+            try:
+                # 簡単な色彩分析
+                import cv2
+                import numpy as np
+                from PIL import Image
+                
+                # PILで画像を読み込み
+                image = Image.open(uploaded_file)
+                image_array = np.array(image)
+                
+                # HSVに変換
+                if len(image_array.shape) == 3:
+                    hsv = cv2.cvtColor(image_array, cv2.COLOR_RGB2HSV)
+                    
+                    # 主要色の計算
+                    h_mean = np.mean(hsv[:,:,0])
+                    s_mean = np.mean(hsv[:,:,1]) / 255 * 100
+                    v_mean = np.mean(hsv[:,:,2]) / 255 * 100
+                    
+                    st.markdown("### 🔍 分析結果")
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        st.metric("主要色相", f"{h_mean:.0f}°", help="画像の主な色相")
+                    with col2:
+                        st.metric("彩度", f"{s_mean:.1f}%", help="色の鮮やかさ")
+                    with col3:
+                        st.metric("明度", f"{v_mean:.1f}%", help="色の明るさ")
+                else:
+                    st.info("グレースケール画像です")
+                    
+            except Exception as e:
+                st.error(f"画像分析エラー: {e}")
+                # フォールバック: モック分析
+                show_mock_analysis()
+        else:
+            # OpenCVが利用できない場合のモック分析
+            show_mock_analysis()
+
+def show_mock_analysis():
+    """依存関係が利用できない場合のモック分析"""
+    st.markdown("### 🔍 分析結果（簡易版）")
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.metric("主要色相", "180° (青系)", help="画像の主な色相")
+    with col2:
+        st.metric("彩度", "75%", help="色の鮮やかさ")
+    with col3:
+        st.metric("明度", "60%", help="色の明るさ")
+    
+    st.info("🚧 完全な画像分析には追加ライブラリが必要です")
 
 def show_stats_page():
     """統計ページ"""
@@ -273,6 +338,19 @@ def show_stats_page():
         st.metric("機能テスト回数", "---", help="ベータ版では非対応")
     with col4:
         st.metric("エラー数", "0", help="現在のセッション")
+    
+    # 利用可能機能の表示
+    st.markdown("### 🔧 利用可能機能")
+    
+    feature_status = {
+        "基本UI": "✅ 利用可能",
+        "AI機能": "✅ 利用可能" if AI_AVAILABLE else "❌ 制限あり",
+        "画像処理": "✅ 利用可能" if IMAGE_PROCESSING_AVAILABLE else "❌ 制限あり",
+        "プロット機能": "✅ 利用可能" if PLOTTING_AVAILABLE else "❌ 制限あり",
+    }
+    
+    for feature, status in feature_status.items():
+        st.write(f"**{feature}**: {status}")
     
     st.markdown("### 🔧 技術情報")
     

@@ -1,18 +1,24 @@
+[theme]
+primaryColor = "#667eea"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#f0f2f6"
+textColor = "#262730"
+
 [server]
 port = 8501
-address = "localhost"
+address = "0.0.0.0"
+headless = true
 enableCORS = false
 enableXsrfProtection = false
 
 [browser]
 gatherUsageStats = false
-serverAddress = "localhost"
-serverPort = 8501
 
 [runner]
 magicEnabled = true
 
 [client]
+toolbarMode = "minimal"
 showErrorDetails = true
 
 [global]
